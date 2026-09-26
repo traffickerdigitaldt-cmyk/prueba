@@ -26,12 +26,13 @@ body{
 #app{display:flex; height:100vh; overflow:hidden}
 aside{
   width:230px; flex-shrink:0; background:var(--sidebar); color:var(--sidebar-text);
-  display:flex; flex-direction:column; padding-top:env(safe-area-inset-top,0px);
+  display:flex; flex-direction:column; padding-top:env(safe-area-inset-top,0px); overflow-y:auto;
 }
 aside .brand{padding:20px 18px; border-bottom:1px solid #262d3d}
 aside .brand b{color:#fff; font-size:16px; display:block}
 aside .brand span{font-size:11.5px; color:#8890a3}
 nav{flex:1; padding:10px}
+nav .grp-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:#5c637a; padding:14px 12px 4px}
 nav button{
   width:100%; text-align:left; background:none; border:none; color:var(--sidebar-text);
   padding:10px 12px; border-radius:8px; font-size:13.5px; cursor:pointer; margin-bottom:2px;
@@ -53,16 +54,18 @@ h1{font-size:20px; margin:0 0 4px}
 .btn{border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer}
 .btn-primary{background:var(--accent); color:#fff}
 .btn-ghost{background:transparent; border:1px solid var(--border); color:var(--text)}
-table{width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--border); border-radius:10px; overflow:hidden}
-th,td{padding:10px 12px; font-size:13px; text-align:left; border-bottom:1px solid var(--border)}
+.table-wrap{overflow-x:auto; border-radius:10px; border:1px solid var(--border)}
+table{width:100%; border-collapse:collapse; background:var(--panel); min-width:640px}
+th,td{padding:10px 12px; font-size:13px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap}
 th{font-size:11px; text-transform:uppercase; color:var(--muted); font-weight:700; background:rgba(0,0,0,.02)}
 tr:last-child td{border-bottom:none}
 .badge{padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; display:inline-block}
+.actions{white-space:nowrap}
 .actions button{background:none; border:none; cursor:pointer; color:var(--muted); font-size:13px; margin-right:8px}
 .actions button:hover{color:var(--accent)}
 .empty{padding:30px; text-align:center; color:var(--muted); font-size:13px}
 .overlay{position:fixed; inset:0; background:rgba(10,14,22,.45); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px}
-.modal{background:var(--panel); border-radius:14px; padding:22px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto}
+.modal{background:var(--panel); border-radius:14px; padding:22px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto}
 .modal h2{font-size:15px; margin:0 0 16px}
 .field{margin-bottom:12px}
 .field label{font-size:11.5px; font-weight:700; color:var(--muted); display:block; margin-bottom:4px}
@@ -71,6 +74,7 @@ tr:last-child td{border-bottom:none}
   font-size:13.5px; background:var(--panel); color:var(--text); outline:none; font-family:inherit;
 }
 .field textarea{min-height:60px; resize:vertical}
+.hint{font-size:11px; color:var(--muted); margin-top:4px; line-height:1.4}
 .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px}
 .report-block{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px}
 .report-block h3{font-size:13px; margin:0 0 10px}
@@ -97,28 +101,81 @@ tr:last-child td{border-bottom:none}
 <script>
 /* =========================================================
    1. DEFINICIÓN DE MÓDULOS (config-driven: agregar un módulo
-      nuevo solo requiere añadir una entrada aquí)
+      nuevo, un campo nuevo o un proveedor nuevo solo requiere
+      tocar esta sección; todo lo demás se genera solo).
    ========================================================= */
+const ESTADOS_ACTIVIDAD = ["Pendiente","En curso","Cumplido","Urgente"];
+
 const MODULES = {
-  actividades: {
-    label: "Actividades", icon: "📋", accent: "#3b6bc4",
-    statusField: "estado",
-    statusOptions: ["Pendiente","En curso","Cumplido","Urgente"],
-    currencyField: "presupuestoProyectado",
+  plazas: {
+    label: "Plazas de venta", icon: "🏬", accent: "#3b6bc4", group:"Actividades",
+    statusField: "estado", statusOptions: ESTADOS_ACTIVIDAD,
+    currencyField: "presupuesto", hasBitacora: true,
     fields: [
       { key:"marca", label:"Marca", type:"text", required:true },
-      { key:"tipo", label:"Tipo de actividad", type:"text" },
+      { key:"nombre", label:"Plaza / ubicación", type:"text", required:true },
       { key:"descripcion", label:"Descripción", type:"textarea", required:true },
-      { key:"proveedor", label:"Proveedor", type:"text" },
-      { key:"fechaInicio", label:"Fecha de inicio", type:"date" },
-      { key:"presupuestoProyectado", label:"Presupuesto proyectado", type:"currency" },
-      { key:"presupuestoEjecutado", label:"Presupuesto ejecutado", type:"currency" },
-      { key:"factura", label:"Factura", type:"select", options:["No aplica","Pendiente","Emitida"] },
-      { key:"estado", label:"Estado", type:"select", options:["Pendiente","En curso","Cumplido","Urgente"] },
+      { key:"proveedor", label:"Proveedor", type:"dynamicSelect", source:"proveedores" },
+      { key:"presupuesto", label:"Presupuesto", type:"currency" },
+      { key:"metaProspectos", label:"Meta de prospectos", type:"number" },
+      { key:"fechaInicio", label:"Fecha de asignación", type:"date", required:true },
+      { key:"fechaFin", label:"Fecha de fin", type:"date", required:true },
+      { key:"estado", label:"Estado", type:"select", options:ESTADOS_ACTIVIDAD },
+    ],
+  },
+  pauta: {
+    label: "Pauta publicitaria", icon: "📣", accent: "#7a5cc9", group:"Actividades",
+    statusField: "estado", statusOptions: ESTADOS_ACTIVIDAD,
+    currencyField: "presupuesto", hasBitacora: true,
+    fields: [
+      { key:"marca", label:"Marca", type:"text", required:true },
+      { key:"contenido", label:"Contenido a pautar", type:"textarea", required:true },
+      { key:"descripcionMarca", label:"Descripción de la marca", type:"textarea" },
+      { key:"referencias", label:"Referencias a pautar", type:"textarea" },
+      { key:"proveedor", label:"Agencia de pauta", type:"dynamicSelect", source:"proveedores",
+        hint:"Regla actual: LeadsYa pauta solo Subaru. Motorleads pauta las demás marcas. Ajusta esto libremente en Proveedores." },
+      { key:"presupuesto", label:"Presupuesto", type:"currency" },
+      { key:"proyeccionLeads", label:"Proyección de leads", type:"number" },
+      { key:"fechaInicio", label:"Fecha de inicio", type:"date", required:true },
+      { key:"fechaFin", label:"Fecha de fin", type:"date", required:true },
+      { key:"estado", label:"Estado", type:"select", options:ESTADOS_ACTIVIDAD },
+    ],
+  },
+  exhibiciones: {
+    label: "Exhibición en CC", icon: "🏢", accent: "#2e9c5c", group:"Actividades",
+    statusField: "estado", statusOptions: ESTADOS_ACTIVIDAD,
+    currencyField: "presupuesto", hasBitacora: true,
+    fields: [
+      { key:"marca", label:"Marca", type:"text", required:true },
+      { key:"centroComercial", label:"Centro comercial", type:"text", required:true },
+      { key:"descripcion", label:"Descripción", type:"textarea" },
+      { key:"proveedor", label:"Proveedor", type:"dynamicSelect", source:"proveedores" },
+      { key:"presupuesto", label:"Presupuesto", type:"currency" },
+      { key:"metaProspectos", label:"Meta de prospectos", type:"number" },
+      { key:"fechaInicio", label:"Fecha de inicio", type:"date", required:true },
+      { key:"fechaFin", label:"Fecha de fin", type:"date", required:true },
+      { key:"estado", label:"Estado", type:"select", options:ESTADOS_ACTIVIDAD },
+    ],
+  },
+  proveedores: {
+    label: "Proveedores", icon: "🤝", accent: "#d69a3e", group:"Control",
+    statusField: "estado", statusOptions: ["Activo","Inactivo"],
+    computed: [
+      { label:"Actividades asignadas",
+        fn:(r)=> ["plazas","pauta","exhibiciones"].reduce((s,k)=> s + (DATA[k]||[]).filter(x=>x.proveedor===r.nombre).length, 0) },
+    ],
+    fields: [
+      { key:"nombre", label:"Nombre del proveedor", type:"text", required:true },
+      { key:"tipo", label:"Tipo", type:"select", options:["Agencia de pauta","Proveedor de plaza","Proveedor de exhibición","Otro"] },
+      { key:"marcasAtendidas", label:"Marcas que atiende", type:"text" },
+      { key:"contacto", label:"Contacto", type:"text" },
+      { key:"telefono", label:"Teléfono", type:"text" },
+      { key:"notas", label:"Notas", type:"textarea" },
+      { key:"estado", label:"Estado", type:"select", options:["Activo","Inactivo"] },
     ],
   },
   leads: {
-    label: "Leads", icon: "🎯", accent: "#2e9c5c",
+    label: "Leads", icon: "🎯", accent: "#2e9c5c", group:"Comercial",
     statusField: "estado",
     statusOptions: ["Nuevo","Contactado","Test drive","Cerrado","Perdido"],
     fields: [
@@ -131,9 +188,8 @@ const MODULES = {
     ],
   },
   inventario: {
-    label: "Inventario", icon: "🚗", accent: "#8a5a16",
-    statusField: "estado",
-    statusOptions: ["Disponible","Reservado","Vendido"],
+    label: "Inventario", icon: "🚗", accent: "#8a5a16", group:"Comercial",
+    statusField: "estado", statusOptions: ["Disponible","Reservado","Vendido"],
     groupByField: "marca",
     groupOptions: ["GWM","JMC","TRUCKS & VANS","SUBARU"],
     sumField: "cantidad",
@@ -149,6 +205,7 @@ const STATUS_COLORS = {
   "Pendiente":"#3b6bc4","En curso":"#d69a3e","Cumplido":"#2e9c5c","Urgente":"#d64545",
   "Nuevo":"#3b6bc4","Contactado":"#d69a3e","Test drive":"#7a5cc9","Cerrado":"#2e9c5c","Perdido":"#d64545",
   "Disponible":"#2e9c5c","Reservado":"#d69a3e","Vendido":"#8b93a5",
+  "Activo":"#2e9c5c","Inactivo":"#8b93a5",
 };
 
 /* =========================================================
@@ -157,7 +214,8 @@ const STATUS_COLORS = {
    ========================================================= */
 let db = null;
 let sharedMode = false;
-const DATA = { actividades:[], leads:[], inventario:[] };
+const DATA = {};
+Object.keys(MODULES).forEach(k => DATA[k] = []);
 
 async function initStore(){
   try{ db = await claude.use("db"); }catch(e){ db = null; }
@@ -166,6 +224,12 @@ async function initStore(){
   badge.className = "sync-badge " + (sharedMode ? "sync-ok" : "sync-local");
   badge.textContent = sharedMode ? "● Datos compartidos" : "● Guardado en este navegador";
   for(const key of Object.keys(MODULES)) await loadModule(key);
+
+  // Semilla inicial de proveedores (editable/eliminable luego)
+  if(!DATA.proveedores.length){
+    await saveRecord("proveedores", { nombre:"LeadsYa", tipo:"Agencia de pauta", marcasAtendidas:"Subaru", contacto:"", telefono:"", notas:"Pauta exclusiva Subaru.", estado:"Activo" });
+    await saveRecord("proveedores", { nombre:"Motorleads", tipo:"Agencia de pauta", marcasAtendidas:"Todas excepto Subaru", contacto:"", telefono:"", notas:"Pauta el resto de marcas.", estado:"Activo" });
+  }
 }
 
 async function loadModule(key){
@@ -200,7 +264,7 @@ async function saveRecord(key, record){
     }catch(e){ alert("No se pudo guardar en la base compartida. Se guardó localmente."); sharedMode=false; }
   }
   const idx = DATA[key].findIndex(r => r.id === record.id);
-  if(idx >= 0) DATA[key][idx] = record; else { record.id = record.id || ("l"+Date.now()); DATA[key].push(record); }
+  if(idx >= 0) DATA[key][idx] = record; else { record.id = record.id || ("l"+Date.now()+Math.random().toString(36).slice(2,6)); DATA[key].push(record); }
   if(!sharedMode) persistLocal(key);
 }
 
@@ -220,17 +284,27 @@ const badge = (text) => {
   const c = STATUS_COLORS[text] || "#7a8496";
   return `<span class="badge" style="background:${c}22;color:${c}">${text}</span>`;
 };
+function bitTotals(r){
+  const b = r.bitacora || [];
+  return { dias:b.length, prospectos:b.reduce((s,e)=>s+(Number(e.prospectos)||0),0), ventas:b.reduce((s,e)=>s+(Number(e.ventas)||0),0) };
+}
 
 /* =========================================================
-   4. NAVEGACIÓN
+   4. NAVEGACIÓN (agrupada por categoría)
    ========================================================= */
-let activeModule = "actividades";
+let activeModule = "plazas";
 
 function renderNav(){
   const nav = document.getElementById("nav");
   nav.innerHTML = "";
-  const items = [...Object.entries(MODULES), ["reportes", { label:"Reportes", icon:"📊" }]];
+  const items = [...Object.entries(MODULES), ["reportes", { label:"Reportes", icon:"📊", group:"Control" }]];
+  let lastGroup = null;
   items.forEach(([key, mod]) => {
+    if(mod.group && mod.group !== lastGroup){
+      const g = document.createElement("div");
+      g.className = "grp-label"; g.textContent = mod.group;
+      nav.appendChild(g); lastGroup = mod.group;
+    }
     const b = document.createElement("button");
     b.textContent = mod.icon + "  " + mod.label;
     b.className = key === activeModule ? "active" : "";
@@ -247,38 +321,52 @@ function render(){
 }
 
 /* =========================================================
-   5. VISTA GENÉRICA DE MÓDULO (tabla + KPIs)
+   5. VISTA GENÉRICA DE MÓDULO (tabla + KPIs + columnas
+      calculadas: bitácora diaria y/o "computed" del módulo)
    ========================================================= */
 function renderModuleView(key){
   const mod = MODULES[key];
   const rows = DATA[key];
   if(mod.groupByField) return renderGroupedView(key, mod, rows);
+
   const total = rows.length;
   const kpis = [`<div class="kpi"><div class="l">Registros</div><div class="v">${total}</div></div>`];
   if(mod.currencyField){
     const sum = rows.reduce((s,r)=>s+(Number(r[mod.currencyField])||0),0);
     kpis.push(`<div class="kpi"><div class="l">${mod.fields.find(f=>f.key===mod.currencyField).label} (total)</div><div class="v">${money(sum)}</div></div>`);
   }
+  if(mod.hasBitacora){
+    const tp = rows.reduce((s,r)=>s+bitTotals(r).prospectos,0);
+    const tv = rows.reduce((s,r)=>s+bitTotals(r).ventas,0);
+    kpis.push(`<div class="kpi"><div class="l">Prospectos totales</div><div class="v">${tp}</div></div>`);
+    kpis.push(`<div class="kpi"><div class="l">Ventas totales</div><div class="v">${tv}</div></div>`);
+  }
   mod.statusOptions.slice(0,3).forEach(s=>{
     const c = rows.filter(r=>r[mod.statusField]===s).length;
     kpis.push(`<div class="kpi"><div class="l">${s}</div><div class="v">${c}</div></div>`);
   });
 
-  const cols = mod.fields.filter(f=>f.type!=="textarea").slice(0,5);
-  const head = cols.map(f=>`<th>${f.label}</th>`).join("") + "<th>Estado</th><th></th>";
+  const cols = mod.fields.filter(f=>f.type!=="textarea").slice(0,6);
+  const extraHeads = [], extraFns = [];
+  if(mod.hasBitacora){ extraHeads.push("Prospectos","Ventas"); extraFns.push(r=>bitTotals(r).prospectos, r=>bitTotals(r).ventas); }
+  if(mod.computed){ mod.computed.forEach(c=>{ extraHeads.push(c.label); extraFns.push(c.fn); }); }
+
+  const head = cols.map(f=>`<th>${f.label}</th>`).join("") + extraHeads.map(h=>`<th>${h}</th>`).join("") + "<th>Estado</th><th></th>";
   const body = rows.length ? rows.map(r => `
     <tr>
       ${cols.map(f=>`<td>${f.type==="currency"?money(r[f.key]):(r[f.key]||"—")}</td>`).join("")}
+      ${extraFns.map(fn=>`<td>${fn(r)}</td>`).join("")}
       <td>
         <select data-role="status" data-id="${r.id}" style="border:none;background:${(STATUS_COLORS[r[mod.statusField]]||"#7a8496")}22;color:${STATUS_COLORS[r[mod.statusField]]||"#7a8496"};font-weight:600;border-radius:20px;padding:3px 8px;font-size:11.5px">
           ${mod.statusOptions.map(s=>`<option ${s===r[mod.statusField]?"selected":""}>${s}</option>`).join("")}
         </select>
       </td>
       <td class="actions">
+        ${mod.hasBitacora?`<button data-role="bitacora" data-id="${r.id}" title="Bitácora diaria">📅</button>`:""}
         <button data-role="edit" data-id="${r.id}" title="Editar">✎</button>
         <button data-role="del" data-id="${r.id}" title="Eliminar">🗑</button>
       </td>
-    </tr>`).join("") : `<tr><td colspan="${cols.length+2}" class="empty">Aún no hay registros. Crea el primero con "+ Nuevo".</td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="${cols.length+extraHeads.length+2}" class="empty">Aún no hay registros. Crea el primero con "+ Nuevo".</td></tr>`;
 
   return `
     <h1>${mod.icon} ${mod.label}</h1>
@@ -288,7 +376,7 @@ function renderModuleView(key){
       <div></div>
       <button class="btn btn-primary" data-role="new">+ Nuevo registro</button>
     </div>
-    <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+    <div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
   `;
 }
 
@@ -327,7 +415,7 @@ function renderGroupedView(key, mod, rows){
     return `
       <div class="report-block">
         <h3>${g} — ${subtotal} ${sumLabel.toLowerCase()}</h3>
-        <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>
+        <div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
       </div>`;
   }).join("");
 
@@ -359,6 +447,9 @@ function wireModuleEvents(){
         render();
       }
     };
+  });
+  root.querySelectorAll('[data-role="bitacora"]').forEach(b=>{
+    b.onclick = () => openBitacora(key, DATA[key].find(r=>r.id===b.dataset.id));
   });
   root.querySelectorAll('[data-role="status"]').forEach(sel=>{
     sel.onchange = async () => {
@@ -411,20 +502,85 @@ function openForm(key, record){
 function fieldHTML(f, value){
   const val = value !== undefined ? value : "";
   const req = f.required ? "required" : "";
-  if(f.type === "select"){
+  const hintHTML = f.hint ? `<div class="hint">${f.hint}</div>` : "";
+  if(f.type === "select" || f.type === "dynamicSelect"){
+    const opts = f.type === "dynamicSelect" ? (DATA[f.source]||[]).map(r=>r.nombre).filter(Boolean) : f.options;
     return `<div class="field"><label>${f.label}</label><select name="${f.key}">
-      ${f.options.map(o=>`<option ${o===val?"selected":""}>${o}</option>`).join("")}
-    </select></div>`;
+      <option value="">— Selecciona —</option>
+      ${opts.map(o=>`<option ${o===val?"selected":""}>${o}</option>`).join("")}
+    </select>${hintHTML}</div>`;
   }
   if(f.type === "textarea"){
-    return `<div class="field"><label>${f.label}</label><textarea name="${f.key}" ${req}>${val}</textarea></div>`;
+    return `<div class="field"><label>${f.label}</label><textarea name="${f.key}" ${req}>${val}</textarea>${hintHTML}</div>`;
   }
-  const inputType = f.type === "currency" ? "number" : (f.type === "date" ? "date" : "text");
-  return `<div class="field"><label>${f.label}</label><input type="${inputType}" name="${f.key}" value="${val}" ${req}></div>`;
+  const inputType = f.type === "currency" ? "number" : (f.type === "date" ? "date" : (f.type === "number" ? "number" : "text"));
+  return `<div class="field"><label>${f.label}</label><input type="${inputType}" name="${f.key}" value="${val}" ${req}>${hintHTML}</div>`;
 }
 
 /* =========================================================
-   7. REPORTES (agrega datos de los tres módulos)
+   7. BITÁCORA DIARIA (día a día) + CONSOLIDADO
+      Se usa en Plazas de venta, Pauta publicitaria y
+      Exhibiciones. Queda ligada al registro (record.bitacora).
+   ========================================================= */
+function openBitacora(key, record){
+  const root = document.getElementById("modalRoot");
+  const draw = () => {
+    const entries = (record.bitacora||[]).slice().sort((a,b)=> (a.fecha||"") < (b.fecha||"") ? -1 : 1);
+    const t = bitTotals(record);
+    const titulo = record.nombre || record.centroComercial || record.marca || "";
+    root.innerHTML = `
+      <div class="overlay" id="ovBit">
+        <div class="modal" style="max-width:580px">
+          <h2>📅 Bitácora diaria — ${record.marca||""} ${titulo}</h2>
+          <div class="sub" style="margin-bottom:10px">Vigencia: ${record.fechaInicio||"—"} a ${record.fechaFin||"—"}</div>
+          <form id="bitForm" style="display:flex;gap:8px;align-items:end;margin-bottom:14px;flex-wrap:wrap">
+            <div class="field" style="flex:1;min-width:130px;margin-bottom:0"><label>Fecha</label>
+              <input type="date" name="fecha" required min="${record.fechaInicio||''}" max="${record.fechaFin||''}" value="${record.fechaInicio||''}"></div>
+            <div class="field" style="flex:1;min-width:90px;margin-bottom:0"><label>Prospectos</label><input type="number" name="prospectos" min="0" value="0"></div>
+            <div class="field" style="flex:1;min-width:90px;margin-bottom:0"><label>Ventas</label><input type="number" name="ventas" min="0" value="0"></div>
+            <button class="btn btn-primary" type="submit" style="height:37px">+ Agregar día</button>
+          </form>
+          <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Prospectos</th><th>Ventas</th><th></th></tr></thead>
+          <tbody>${entries.length ? entries.map(e=>`
+            <tr><td>${e.fecha}</td><td>${e.prospectos}</td><td>${e.ventas}</td>
+            <td class="actions"><button data-del="${e.id}" title="Eliminar">🗑</button></td></tr>`).join("")
+            : `<tr><td colspan="4" class="empty">Sin registros diarios aún.</td></tr>`}
+          </tbody></table></div>
+          <div class="report-block" style="margin-top:14px">
+            <h3>Consolidado de la actividad</h3>
+            <div class="kpis" style="margin-bottom:0">
+              <div class="kpi"><div class="l">Días registrados</div><div class="v">${t.dias}</div></div>
+              <div class="kpi"><div class="l">Prospectos totales</div><div class="v">${t.prospectos}</div></div>
+              <div class="kpi"><div class="l">Ventas totales</div><div class="v">${t.ventas}</div></div>
+              <div class="kpi"><div class="l">Conversión</div><div class="v">${t.prospectos ? Math.round((t.ventas/t.prospectos)*100) : 0}%</div></div>
+            </div>
+          </div>
+          <div class="modal-actions"><button class="btn btn-ghost" id="closeBit">Cerrar</button></div>
+        </div>
+      </div>`;
+    document.getElementById("closeBit").onclick = () => { root.innerHTML=""; render(); };
+    document.getElementById("ovBit").onclick = (e) => { if(e.target.id==="ovBit"){ root.innerHTML=""; render(); } };
+    document.getElementById("bitForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      record.bitacora = record.bitacora || [];
+      record.bitacora.push({ id:"b"+Date.now()+Math.random().toString(36).slice(2,5), fecha: fd.get("fecha"), prospectos:Number(fd.get("prospectos"))||0, ventas:Number(fd.get("ventas"))||0 });
+      await saveRecord(key, record);
+      draw();
+    };
+    root.querySelectorAll("[data-del]").forEach(b=>{
+      b.onclick = async () => {
+        record.bitacora = (record.bitacora||[]).filter(x=>x.id!==b.dataset.del);
+        await saveRecord(key, record);
+        draw();
+      };
+    });
+  };
+  draw();
+}
+
+/* =========================================================
+   8. REPORTES (consolida todos los módulos automáticamente)
    ========================================================= */
 function renderReportes(){
   let blocks = "";
@@ -435,33 +591,52 @@ function renderReportes(){
       ${mod.statusOptions.map(s=>{
         const c = rows.filter(r=>r[mod.statusField]===s).length;
         const pct = Math.round((c/max)*100);
-        return `<div class="bar-row"><div class="lab">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${STATUS_COLORS[s]}"></div></div><div class="num">${c}</div></div>`;
+        return `<div class="bar-row"><div class="lab">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${STATUS_COLORS[s]||'#7a8496'}"></div></div><div class="num">${c}</div></div>`;
       }).join("")}
     </div>`;
   });
 
-  const act = DATA.actividades, inv = DATA.inventario, leads = DATA.leads;
-  const proyectado = act.reduce((s,r)=>s+(Number(r.presupuestoProyectado)||0),0);
-  const ejecutado = act.reduce((s,r)=>s+(Number(r.presupuestoEjecutado)||0),0);
+  const actKeys = ["plazas","pauta","exhibiciones"];
+  let presupuesto = 0, prospectos = 0, ventas = 0;
+  actKeys.forEach(k => (DATA[k]||[]).forEach(r => {
+    presupuesto += Number(r.presupuesto)||0;
+    const t = bitTotals(r); prospectos += t.prospectos; ventas += t.ventas;
+  }));
+  const inv = DATA.inventario||[], leads = DATA.leads||[];
   const unidadesDisponibles = inv.filter(r=>r.estado!=="Vendido").reduce((s,r)=>s+(Number(r.cantidad)||0),0);
   const cerrados = leads.filter(r=>r.estado==="Cerrado").length;
   const conversion = leads.length ? Math.round((cerrados/leads.length)*100) : 0;
 
+  // Desglose de presupuesto por proveedor (control de cada uno)
+  const provRows = (DATA.proveedores||[]).map(p=>{
+    let gasto = 0, act = 0;
+    actKeys.forEach(k => (DATA[k]||[]).filter(r=>r.proveedor===p.nombre).forEach(r=>{ gasto += Number(r.presupuesto)||0; act++; }));
+    return { nombre:p.nombre, tipo:p.tipo, act, gasto };
+  }).filter(p=>p.act>0);
+  const provBlock = provRows.length ? `
+    <div class="report-block"><h3>🤝 Gasto e inversión por proveedor</h3>
+      <div class="table-wrap"><table><thead><tr><th>Proveedor</th><th>Tipo</th><th>Actividades</th><th>Presupuesto asignado</th></tr></thead>
+      <tbody>${provRows.map(p=>`<tr><td>${p.nombre}</td><td>${p.tipo||"—"}</td><td>${p.act}</td><td>${money(p.gasto)}</td></tr>`).join("")}</tbody>
+      </table></div>
+    </div>` : "";
+
   return `
     <h1>📊 Reportes</h1>
-    <div class="sub">Consolidado general de mercadeo, leads e inventario.</div>
+    <div class="sub">Consolidado general de plazas, pauta, exhibiciones, leads e inventario.</div>
     <div class="kpis">
-      <div class="kpi"><div class="l">Presupuesto proyectado</div><div class="v">${money(proyectado)}</div></div>
-      <div class="kpi"><div class="l">Presupuesto ejecutado</div><div class="v">${money(ejecutado)}</div></div>
+      <div class="kpi"><div class="l">Presupuesto total actividades</div><div class="v">${money(presupuesto)}</div></div>
+      <div class="kpi"><div class="l">Prospectos generados</div><div class="v">${prospectos}</div></div>
+      <div class="kpi"><div class="l">Ventas generadas</div><div class="v">${ventas}</div></div>
       <div class="kpi"><div class="l">Unidades disponibles</div><div class="v">${unidadesDisponibles}</div></div>
       <div class="kpi"><div class="l">Conversión de leads</div><div class="v">${conversion}%</div></div>
     </div>
+    ${provBlock}
     ${blocks}
   `;
 }
 
 /* =========================================================
-   8. ARRANQUE
+   9. ARRANQUE
    ========================================================= */
 (async function start(){
   document.getElementById("content").innerHTML = '<div class="empty">Cargando información…</div>';
