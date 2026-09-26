@@ -107,8 +107,8 @@ tr:last-child td{border-bottom:none}
 const ESTADOS_ACTIVIDAD = ["Pendiente","En curso","Cumplido","Urgente"];
 
 const MODULES = {
-  plazas: {
-    label: "Plazas de venta", icon: "🏬", accent: "#3b6bc4", group:"Actividades",
+  Playas: {
+    label: "Playas de venta", icon: "🏬", accent: "#3b6bc4", group:"Actividades",
     statusField: "estado", statusOptions: ESTADOS_ACTIVIDAD,
     currencyField: "presupuesto", hasBitacora: true,
     fields: [
@@ -162,7 +162,7 @@ const MODULES = {
     statusField: "estado", statusOptions: ["Activo","Inactivo"],
     computed: [
       { label:"Actividades asignadas",
-        fn:(r)=> ["plazas","pauta","exhibiciones"].reduce((s,k)=> s + (DATA[k]||[]).filter(x=>x.proveedor===r.nombre).length, 0) },
+        fn:(r)=> ["Playas","pauta","exhibiciones"].reduce((s,k)=> s + (DATA[k]||[]).filter(x=>x.proveedor===r.nombre).length, 0) },
     ],
     fields: [
       { key:"nombre", label:"Nombre del proveedor", type:"text", required:true },
@@ -292,7 +292,7 @@ function bitTotals(r){
 /* =========================================================
    4. NAVEGACIÓN (agrupada por categoría)
    ========================================================= */
-let activeModule = "plazas";
+let activeModule = "Playas";
 
 function renderNav(){
   const nav = document.getElementById("nav");
@@ -519,7 +519,7 @@ function fieldHTML(f, value){
 
 /* =========================================================
    7. BITÁCORA DIARIA (día a día) + CONSOLIDADO
-      Se usa en Plazas de venta, Pauta publicitaria y
+      Se usa en Playas de venta, Pauta publicitaria y
       Exhibiciones. Queda ligada al registro (record.bitacora).
    ========================================================= */
 function openBitacora(key, record){
@@ -596,7 +596,7 @@ function renderReportes(){
     </div>`;
   });
 
-  const actKeys = ["plazas","pauta","exhibiciones"];
+  const actKeys = ["Playas","pauta","exhibiciones"];
   let presupuesto = 0, prospectos = 0, ventas = 0;
   actKeys.forEach(k => (DATA[k]||[]).forEach(r => {
     presupuesto += Number(r.presupuesto)||0;
@@ -622,7 +622,7 @@ function renderReportes(){
 
   return `
     <h1>📊 Reportes</h1>
-    <div class="sub">Consolidado general de plazas, pauta, exhibiciones, leads e inventario.</div>
+    <div class="sub">Consolidado general de Playas, pauta, exhibiciones, leads e inventario.</div>
     <div class="kpis">
       <div class="kpi"><div class="l">Presupuesto total actividades</div><div class="v">${money(presupuesto)}</div></div>
       <div class="kpi"><div class="l">Prospectos generados</div><div class="v">${prospectos}</div></div>
