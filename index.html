@@ -102,6 +102,55 @@ tr.clickrow:hover td{background:rgba(59,107,196,.08)}
 .bar-row .num{width:46px; text-align:right; font-weight:700}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr)); gap:14px; margin-bottom:14px}
+.grid2 .report-block{margin-bottom:0}
+.cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; margin-bottom:16px}
+.bcard{background:var(--panel); border:1px solid var(--border); border-top:4px solid var(--c); border-radius:12px; padding:14px; cursor:pointer; transition:transform .15s, box-shadow .15s, opacity .15s}
+.bcard:hover{transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.10)}
+.bcard.focus{outline:2px solid var(--c); outline-offset:1px}
+.bcard.dim{opacity:.5}
+.bcard .top{display:flex; justify-content:space-between; align-items:center; gap:8px}
+.bcard .name{font-weight:700; font-size:14px}
+.bcard .big{font-size:24px; font-weight:800; margin-top:6px}
+.bcard .lbl{font-size:11px; color:var(--muted)}
+.bcard .mini{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.7}
+.bcard .mini b{color:var(--text)}
+.pill{display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px}
+.pill.live{background:#2e9c5c22; color:#2e9c5c; font-size:12px; padding:5px 12px}
+.seg{display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--panel)}
+.seg button{border:none; background:none; color:var(--text); padding:7px 14px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit}
+.seg button.on{background:var(--accent); color:#fff}
+.focusbar{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:8px 14px; font-size:13px; margin-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.hrow{display:flex; gap:10px; align-items:center; padding:6px 0; cursor:pointer; border-bottom:1px dashed var(--border); transition:opacity .15s}
+.hrow:last-child{border-bottom:none}
+.hrow.dim{opacity:.35}
+.hlab{width:130px; flex-shrink:0; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px}
+.hlab i{width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0}
+.hbars{flex:1; display:flex; flex-direction:column; gap:4px; min-width:0}
+.hbar{display:flex; align-items:center; gap:8px}
+.htrack{flex:1; height:12px; background:var(--bg); border-radius:6px; display:flex; overflow:hidden}
+.hseg{height:100%; transition:width .4s}
+.hseg:hover{filter:brightness(1.15)}
+.hval{width:76px; font-size:11.5px; font-weight:700; text-align:right; flex-shrink:0}
+.legend{display:flex; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-bottom:8px}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px}
+.alert-row{display:flex; gap:10px; align-items:flex-start; padding:9px 8px; border-bottom:1px solid var(--border); font-size:12.5px; cursor:pointer; border-radius:6px}
+.alert-row:hover{background:var(--bg)}
+.alert-row:last-child{border-bottom:none}
+.dot{width:9px; height:9px; border-radius:50%; margin-top:5px; flex-shrink:0}
+#tip{position:fixed; z-index:100; pointer-events:none; background:#111827; color:#fff; font-size:12px; padding:6px 10px; border-radius:8px; max-width:260px; display:none; line-height:1.4}
+#toast{position:fixed; bottom:22px; left:50%; transform:translate(-50%,20px); background:#111827; color:#fff; font-size:13px; padding:9px 18px; border-radius:22px; opacity:0; transition:all .25s; z-index:120; pointer-events:none}
+#toast.on{opacity:1; transform:translate(-50%,0)}
+@media (max-width:760px){
+  #app{flex-direction:column}
+  aside{width:100%; flex-direction:row; align-items:center; overflow-x:auto; overflow-y:hidden; flex-shrink:0}
+  aside .brand{padding:10px 14px; border-bottom:none; border-right:1px solid #262d3d; flex-shrink:0}
+  aside .brand span, .sync-badge, nav .grp-label{display:none}
+  nav{display:flex; padding:6px; gap:2px; flex:none}
+  nav button{white-space:nowrap; width:auto; margin:0; padding:8px 12px}
+  main{padding:16px 14px}
+  .hlab{width:96px}
+}
 </style>
 </head>
 <body>
@@ -114,11 +163,13 @@ tr.clickrow:hover td{background:rgba(59,107,196,.08)}
   <main><div id="content"></div></main>
 </div>
 <div id="modalRoot"></div>
+<div id="tip"></div>
+<div id="toast"></div>
 
 <script>
 /* =========================================================
    0. CATÁLOGOS COMPARTIDOS (la marca es el hilo que conecta
-      planes, actividades, merchandising, leads e inventario)
+      planes, actividades, merchandising y leads)
    ========================================================= */
 const MARCAS = ["GWM","JMC","TRUCKS & VANS","SUBARU"];          // marcas principales (siempre visibles)
 const MARCAS_EXTRA = ["JAC MOTORS","CITROËN"];                   // aparecen en la hoja de gestión cuando tienen datos
@@ -315,21 +366,6 @@ const MODULES = {
       { key:"estado", label:"Estado", type:"select", options:["Nuevo","Contactado","Test drive","Cerrado","Perdido"] },
     ],
   },
-  inventario: {
-    label: "Inventario", icon: "🚗", accent: "#8a5a16", group:"Comercial",
-    statusField: "estado", statusOptions: ["Disponible","Reservado","Vendido"],
-    groupByField: "marca",
-    groupOptions: MARCAS,
-    sumField: "cantidad",
-    newLabel:"+ Nueva unidad", plural:"unidades registradas",
-    fields: [
-      brandSelect(),
-      { key:"titulo", label:"Título / Modelo", type:"text", required:true },
-      { key:"cantidad", label:"Cantidad", type:"number", required:true },
-      { key:"estado", label:"Estado", type:"select", options:["Disponible","Reservado","Vendido"] },
-    ],
-  },
-
   /* ---------- CONTROL ---------- */
   proveedores: {
     label: "Proveedores", icon: "🤝", accent: "#d69a3e", group:"Control",
@@ -374,7 +410,7 @@ async function initStore(){
   sharedMode = !!db;
   const badge = document.getElementById("syncBadge");
   badge.className = "sync-badge " + (sharedMode ? "sync-ok" : "sync-local");
-  badge.textContent = sharedMode ? "● Datos compartidos" : "● Guardado en este navegador";
+  badge.textContent = sharedMode ? "● Datos compartidos · en vivo" : "● Guardado en este navegador";
   for(const key of Object.keys(MODULES)) await loadModule(key);
 
   // Semilla inicial de proveedores (editable/eliminable luego)
@@ -418,6 +454,7 @@ async function saveRecord(key, record){
   const idx = DATA[key].findIndex(r => r.id === record.id);
   if(idx >= 0) DATA[key][idx] = record; else { record.id = record.id || ("l"+Date.now()+Math.random().toString(36).slice(2,6)); DATA[key].push(record); }
   if(!sharedMode) persistLocal(key);
+  toast("Guardado ✓");
 }
 
 async function deleteRecord(key, id){
@@ -426,6 +463,7 @@ async function deleteRecord(key, id){
   }
   DATA[key] = DATA[key].filter(r => r.id !== id);
   if(!sharedMode) persistLocal(key);
+  toast("Eliminado");
 }
 
 /* =========================================================
@@ -525,12 +563,13 @@ function filterBar(mod, opts){
 /* =========================================================
    4. NAVEGACIÓN (agrupada por categoría)
    ========================================================= */
-let activeModule = "gestion";
+let activeModule = "dashboard";
 
 function renderNav(){
   const nav = document.getElementById("nav");
   nav.innerHTML = "";
   const items = [
+    ["dashboard", { label:"Dashboard en vivo", icon:"📡", group:"Panel" }],
     ["gestion", { label:"Gestión por marca", icon:"🧭", group:"Panel" }],
     ...Object.entries(MODULES),
     ["reportes", { label:"Reportes", icon:"📊", group:"Control" }],
@@ -556,6 +595,7 @@ function render(){
   renderNav();
   const content = document.getElementById("content");
   content.innerHTML = activeModule === "reportes" ? renderReportes()
+                    : activeModule === "dashboard" ? renderDashboard()
                     : activeModule === "gestion" ? renderGestion()
                     : renderModuleView(activeModule);
   wireModuleEvents();
@@ -649,7 +689,7 @@ function buildColumns(mod){
   return [...cols, ...comp];
 }
 
-/* Vista agrupada por marca (Inventario, Pedidos de merchandising y los planes):
+/* Vista agrupada por marca (Pedidos de merchandising y los planes):
    una sección por marca, con totales. Las cifras se editan directo en la tabla. */
 function renderGroupedView(key, mod, rows){
   const gf = mod.groupByField;
@@ -766,7 +806,25 @@ function wireModuleEvents(){
   const exp = root.querySelector('[data-role="export"]');
   if(exp) exp.onclick = exportGestion;
 
-  if(key === "reportes" || key === "gestion") return;
+  // Dashboard interactivo
+  root.querySelectorAll('[data-metric]').forEach(b=>{ b.onclick = () => { DASH.metric = b.dataset.metric; render(); }; });
+  root.querySelectorAll('[data-cum]').forEach(b=>{ b.onclick = () => { DASH.cum = b.dataset.cum === "1"; render(); }; });
+  root.querySelectorAll('[data-focus]').forEach(el=>{
+    el.onclick = () => {
+      const v = el.dataset.focus;
+      FILTERS.marca = (v && FILTERS.marca && sameMarca(FILTERS.marca, v)) ? "" : v;
+      render();
+    };
+  });
+  root.querySelectorAll('[data-goto]').forEach(el=>{
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if(el.dataset.marca !== undefined) FILTERS.marca = el.dataset.marca;
+      activeModule = el.dataset.goto; render();
+    };
+  });
+
+  if(key === "reportes" || key === "gestion" || key === "dashboard") return;
 
   const btnNew = root.querySelector('[data-role="new"]');
   if(btnNew) btnNew.onclick = () => openForm(key, null);
@@ -936,9 +994,289 @@ function openBitacora(key, record){
 }
 
 /* =========================================================
+   7b. DASHBOARD EN VIVO (interactivo, por marca)
+   ========================================================= */
+const DASH = { metric:"inversion", cum:false };
+let LAST_SYNC = null, READY = false, renderTimer = null;
+
+const BRAND_PALETTE = ["#3b6bc4","#d64545","#d69a3e","#2e9c5c","#7a5cc9","#8a5a16","#0e8f9a","#c2570c"];
+const BRAND_COLORS = { "GWM":"#3b6bc4", "JMC":"#d64545", "TRUCKS & VANS":"#d69a3e", "SUBARU":"#2e9c5c", "JAC MOTORS":"#7a5cc9", "CITROËN":"#c2570c" };
+function brandColor(b){
+  const k = TODAS_MARCAS.find(o=>sameMarca(o,b));
+  if(k) return BRAND_COLORS[k];
+  let h = 0; for(const c of String(b)) h = (h*31 + c.charCodeAt(0)) % BRAND_PALETTE.length;
+  return BRAND_PALETTE[h];
+}
+const moneyShort = n => {
+  n = Number(n)||0;
+  if(Math.abs(n) >= 1e6) return "$ " + (n/1e6).toLocaleString("es-CO",{maximumFractionDigits:1}) + " M";
+  if(Math.abs(n) >= 1e3) return "$ " + Math.round(n/1e3).toLocaleString("es-CO") + " mil";
+  return "$ " + n;
+};
+const isoToday = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const fechaCorta = f => { const d = new Date(f+"T00:00:00"); return isNaN(d) ? f : d.getDate()+" "+MESES[d.getMonth()].slice(0,3); };
+
+function toast(msg){
+  if(!READY) return;
+  const t = document.getElementById("toast"); if(!t) return;
+  t.textContent = msg; t.classList.add("on");
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("on"), 1800);
+}
+
+/* ---- Tiempo real: cada colección se escucha y la pantalla se refresca sola ---- */
+function liveLabel(){
+  if(!sharedMode) return "○ Sin conexión en vivo · datos de este navegador";
+  const t = (LAST_SYNC || new Date()).toLocaleTimeString("es-CO", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+  return "● En vivo · actualizado " + t;
+}
+function touchLive(){
+  LAST_SYNC = new Date();
+  const el = document.getElementById("livePill"); if(el) el.textContent = liveLabel();
+}
+function scheduleRender(){
+  clearTimeout(renderTimer);
+  const attempt = () => {
+    const ae = document.activeElement;
+    const typing = ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName) && document.getElementById("content").contains(ae);
+    const modal = document.getElementById("modalRoot").innerHTML.trim() !== "";
+    if(typing || modal){ renderTimer = setTimeout(attempt, 1500); return; }   // no interrumpe mientras escribes
+    render();
+  };
+  renderTimer = setTimeout(attempt, 300);
+}
+function subscribeLive(){
+  if(!db) return;
+  const norm = a => JSON.stringify([...a].sort((x,y)=> x.id < y.id ? -1 : 1));
+  Object.keys(MODULES).forEach(key=>{
+    try{
+      db.collection(key).onSnapshot(snap=>{
+        const rows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        touchLive();
+        if(norm(rows) === norm(DATA[key])) return;
+        DATA[key] = rows;
+        scheduleRender();
+      }, ()=>{});
+    }catch(e){}
+  });
+}
+
+/* ---- Piezas visuales ---- */
+function ring(p, color, size){
+  size = size || 64;
+  const r = size/2 - 6, c = 2*Math.PI*r, v = Math.min(100, p||0), h = size/2;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${h}" cy="${h}" r="${r}" fill="none" style="stroke:var(--border)" stroke-width="7"/>
+    <circle cx="${h}" cy="${h}" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c*v/100} ${c}" transform="rotate(-90 ${h} ${h})"/>
+    <text x="${h}" y="${h}" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="700" style="fill:var(--text)">${p===null?"—":p+"%"}</text></svg>`;
+}
+
+function metricInfo(t, metric){
+  if(metric === "prospectos") return { v:String(t.pros), label:"Prospectos logrados", p:pct(t.pros,t.metaPros), sub:`Meta del plan: ${t.metaPros}`, num:t.pros };
+  if(metric === "ventas")     return { v:String(t.ven),  label:"Ventas logradas",     p:pct(t.ven,t.metaVentas),  sub:`Meta del plan: ${t.metaVentas}`, num:t.ven };
+  return { v:moneyShort(t.planTotal), label:"Inversión planeada", p:pct(t.presAct,t.planTotal), sub:`Ejecutado: ${moneyShort(t.presAct)}`, num:t.planTotal };
+}
+
+function brandCard(b, t, metric){
+  const col = brandColor(b), m = metricInfo(t, metric);
+  const focus = FILTERS.marca && sameMarca(FILTERS.marca, b), dim = FILTERS.marca && !focus;
+  const hoy = isoToday();
+  const urg = t.items.filter(r=>r.estado==="Urgente").length;
+  const venc = t.items.filter(r=>r.fechaFin && r.fechaFin < hoy && r.estado!=="Cumplido").length;
+  const empty = !t.planTotal && !t.act.length && !t.ped.length && !t.leadsN;
+  return `<div class="bcard ${focus?"focus":""} ${dim?"dim":""}" style="--c:${col}" data-focus="${esc(b)}">
+    <div class="top"><div><div class="name">${esc(b)}</div><div class="lbl">${m.label}</div></div>${ring(m.p, col)}</div>
+    <div class="big">${m.v}</div><div class="lbl">${m.sub}</div>
+    ${empty ? `<div class="mini">Sin datos en este período.</div>` : `<div class="mini">
+      Plan de medios <b>${moneyShort(t.planMedios)}</b> · Merch. <b>${moneyShort(t.planMerchV)}</b><br>
+      Actividades <b>${t.act.length}</b> · Prospectos <b>${t.pros}</b>/${t.metaPros} · Ventas <b>${t.ven}</b>/${t.metaVentas}</div>
+      <div class="lbl" style="margin-top:8px">Merchandising ${pctTxt(t.merchAvance)}</div>
+      <div class="bar-track" style="margin-top:3px"><div class="bar-fill" style="width:${t.merchAvance||0}%;background:${col}"></div></div>`}
+    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      ${urg ? `<span class="pill" style="background:#d6454522;color:#d64545">${urg} urgente${urg>1?"s":""}</span>` : ""}
+      ${venc ? `<span class="pill" style="background:#d69a3e22;color:#b9791f">${venc} vencida${venc>1?"s":""}</span>` : ""}
+      <button class="btn btn-ghost" style="margin-left:auto;padding:5px 10px;font-size:12px" data-goto="gestion" data-marca="${esc(b)}">Ver gestión →</button>
+    </div></div>`;
+}
+
+// Barras horizontales: cada marca puede tener varias barras, cada barra varios segmentos
+function barsChart(data, fmtV){
+  const tot = b => b.segs.reduce((s,x)=>s+x.v,0);
+  const max = Math.max(1, ...data.flatMap(r=>r.bars.map(tot)));
+  return data.map(r=>{
+    const dim = FILTERS.marca && !sameMarca(FILTERS.marca, r.brand);
+    return `<div class="hrow ${dim?"dim":""}" data-focus="${esc(r.brand)}">
+      <div class="hlab"><i style="background:${brandColor(r.brand)}"></i>${esc(r.brand)}</div>
+      <div class="hbars">${r.bars.map(b=>`<div class="hbar"><div class="htrack">${b.segs.filter(x=>x.v>0).map(x=>`<div class="hseg" style="width:${x.v/max*100}%;background:${x.color}" data-tip="${esc(x.tip)}"></div>`).join("")}</div><span class="hval">${fmtV(tot(b))}</span></div>`).join("")}</div>
+    </div>`;
+  }).join("");
+}
+const legend = items => `<div class="legend">${items.map(([c,l])=>`<span><i style="background:${c}"></i>${l}</span>`).join("")}</div>`;
+
+function donutChart(items, fmtV, centerLabel){
+  const total = items.reduce((s,x)=>s+x.value,0);
+  if(!total) return `<div class="empty">Aún no hay datos para este indicador.</div>`;
+  const R = 70, C = 2*Math.PI*R; let acc = 0;
+  const arcs = items.filter(x=>x.value>0).map(x=>{
+    const len = x.value/total*C;
+    const dim = FILTERS.marca && !sameMarca(FILTERS.marca, x.label);
+    const el = `<circle cx="100" cy="100" r="${R}" fill="none" stroke="${x.color}" stroke-width="26" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-acc}" transform="rotate(-90 100 100)" style="cursor:pointer;opacity:${dim?.25:1}" data-focus="${esc(x.label)}" data-tip="${esc(x.label)}: ${esc(fmtV(x.value))} (${Math.round(x.value/total*100)}%)"></circle>`;
+    acc += len; return el;
+  }).join("");
+  return `<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+    <svg width="190" height="190" viewBox="0 0 200 200">${arcs}
+      <text x="100" y="94" text-anchor="middle" font-size="17" font-weight="800" style="fill:var(--text)">${esc(fmtV(total))}</text>
+      <text x="100" y="114" text-anchor="middle" font-size="10.5" style="fill:var(--muted)">${esc(centerLabel)}</text></svg>
+    <div style="flex:1;min-width:150px">${items.map(x=>`<div class="hrow" style="padding:4px 0" data-focus="${esc(x.label)}"><div class="hlab" style="width:auto;flex:1"><i style="background:${x.color}"></i>${esc(x.label)}</div><span class="hval" style="width:auto">${esc(fmtV(x.value))} · ${total?Math.round(x.value/total*100):0}%</span></div>`).join("")}</div>
+  </div>`;
+}
+
+function entryInPeriod(f){
+  if(!FILTERS.mes && !FILTERS.anio) return true;
+  const d = new Date(f+"T00:00:00"); if(isNaN(d)) return true;
+  if(FILTERS.mes && MESES[d.getMonth()] !== FILTERS.mes) return false;
+  if(FILTERS.anio && String(d.getFullYear()) !== String(FILTERS.anio)) return false;
+  return true;
+}
+
+// Evolución diaria (o acumulada) desde las bitácoras de playas, pauta y exhibiciones
+function trendChart(brands){
+  const per = {}, dates = new Set();
+  brands.forEach(b=>{
+    per[b] = {};
+    statsFor(b).act.forEach(r=>(r.bitacora||[]).forEach(e=>{
+      if(!e.fecha || !entryInPeriod(e.fecha)) return;
+      const o = per[b][e.fecha] || (per[b][e.fecha] = { p:0, v:0 });
+      o.p += Number(e.prospectos)||0; o.v += Number(e.ventas)||0; dates.add(e.fecha);
+    }));
+  });
+  const ds = [...dates].sort();
+  if(!ds.length) return `<div class="empty">Aún no hay bitácoras diarias. Cuando registres prospectos y ventas día a día (📅 en Playas, Pauta o Exhibición), la evolución aparece aquí.</div>`;
+  const field = DASH.metric === "ventas" ? "v" : "p";
+  const name = field === "v" ? "Ventas" : "Prospectos";
+  const series = brands.map(b=>{
+    let run = 0;
+    return { b, pts: ds.map(d=>{ const v = (per[b][d]||{})[field] || 0; run += v; return DASH.cum ? run : v; }) };
+  }).filter(s=>s.pts.some(v=>v>0));
+  if(!series.length) return `<div class="empty">Sin ${name.toLowerCase()} registrados en este período.</div>`;
+  const W = 640, H = 230, pl = 38, pr = 14, pt = 14, pb = 28;
+  const yMax = Math.max(1, ...series.flatMap(s=>s.pts));
+  const X = i => pl + (ds.length > 1 ? i/(ds.length-1) : 0.5) * (W-pl-pr);
+  const Y = v => pt + (1 - v/yMax) * (H-pt-pb);
+  let g = "";
+  for(let k=0;k<=4;k++){
+    const v = yMax*k/4, y = Y(v);
+    g += `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" style="stroke:var(--border)" stroke-dasharray="3 3"/><text x="${pl-6}" y="${y}" text-anchor="end" dominant-baseline="central" font-size="10" style="fill:var(--muted)">${Math.round(v)}</text>`;
+  }
+  const step = Math.max(1, Math.ceil(ds.length/6));
+  ds.forEach((d,i)=>{ if(i%step===0 || i===ds.length-1) g += `<text x="${X(i)}" y="${H-8}" text-anchor="middle" font-size="10" style="fill:var(--muted)">${fechaCorta(d)}</text>`; });
+  const lines = series.map(s=>{
+    const col = brandColor(s.b), dim = FILTERS.marca && !sameMarca(FILTERS.marca, s.b), foc = FILTERS.marca && !dim;
+    const path = s.pts.map((v,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)).join(" ");
+    return `<g style="opacity:${dim?.2:1}"><path d="${path}" fill="none" stroke="${col}" stroke-width="${foc?3.5:2.5}" stroke-linejoin="round"/>
+      ${s.pts.map((v,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="4" fill="${col}" data-tip="${esc(s.b)} · ${fechaCorta(ds[i])}: ${v} ${name.toLowerCase()}${DASH.cum?" (acumulado)":""}"></circle>`).join("")}</g>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${g}${lines}</svg>
+    ${legend(series.map(s=>[brandColor(s.b), esc(s.b)]))}`;
+}
+
+// Alertas: urgentes, vencidas y merchandising por pedir
+function alertsList(brand){
+  const hoy = isoToday(), out = [];
+  const push = (sev, b, tipo, texto, goto) => out.push({ sev, b, tipo, texto, goto });
+  [["Playas","Playa de venta", r=>r.nombre||""],
+   ["pauta","Pauta", r=>(r.contenido||"").slice(0,70)],
+   ["exhibiciones","Exhibición CC", r=>r.centroComercial||""],
+   ["planMedios","Plan de medios", r=>(r.descripcion||"").slice(0,70)]].forEach(([k,tipo,fn])=>{
+    const bf = brandFieldOf(MODULES[k]);
+    rowsFor(k, brand).forEach(r=>{
+      if(r.estado === "Urgente") push(0, r[bf], tipo, `${fn(r)} · marcada como urgente`, k);
+      else if(r.fechaFin && r.fechaFin < hoy && r.estado !== "Cumplido") push(1, r[bf], tipo, `${fn(r)} · terminó el ${r.fechaFin} y no está cumplida`, k);
+    });
+  });
+  const pend = {};
+  rowsFor("planMerch", brand).filter(r=>r.estado==="Pendiente").forEach(r=>{ pend[r.marca] = (pend[r.marca]||0) + 1; });
+  Object.entries(pend).forEach(([b,n])=>push(2, b, "Merchandising", `${n} material${n>1?"es":""} pendiente${n>1?"s":""} por pedir`, "planMerch"));
+  return out.sort((a,b)=>a.sev-b.sev);
+}
+
+function renderDashboard(){
+  const metric = DASH.metric;
+  const brands = brandsWithData();
+  const S = brands.map(b=>[b, statsFor(b)]);
+  const focus = FILTERS.marca;
+  const g = statsFor(focus || null);
+  const periodo = [FILTERS.mes, FILTERS.anio].filter(Boolean).join(" ") || "todos los períodos";
+  const urg = g.items.filter(r=>r.estado==="Urgente").length, cump = g.items.filter(r=>r.estado==="Cumplido").length;
+
+  const seg = (attr, opts, cur) => `<div class="seg">${opts.map(([v,l])=>`<button class="${String(cur)===String(v)?"on":""}" ${attr}="${v}">${l}</button>`).join("")}</div>`;
+  const kpis = [
+    kpi("Inversión planeada", money(g.planTotal), `Medios ${moneyShort(g.planMedios)} · Merch ${moneyShort(g.planMerchV)}`),
+    kpi("Ejecutado en actividades", money(g.presAct), `${pctTxt(pct(g.presAct, g.planTotal))} del plan`),
+    kpi("Prospectos", `${g.pros} / ${g.metaPros}`, `${pctTxt(pct(g.pros,g.metaPros))} de la meta`),
+    kpi("Ventas", `${g.ven} / ${g.metaVentas}`, `${pctTxt(pct(g.ven,g.metaVentas))} de la meta`),
+    kpi("Actividades", g.items.length, `${cump} cumplidas · ${urg} urgentes`),
+    kpi("Merchandising", pctTxt(g.merchAvance), `${g.pmerch.length} materiales · ${g.ped.length} pedidos`),
+  ].join("");
+
+  const cards = S.map(([b,t])=>brandCard(b, t, metric)).join("");
+
+  // Gráfico principal (según indicador)
+  let barsData, barsLegend, fmtB, donutItems, donutFmt, donutLabel, titleBars, titleDonut;
+  if(metric === "inversion"){
+    titleBars = "Inversión por marca"; titleDonut = "Reparto de la inversión planeada";
+    barsData = S.map(([b,t])=>{ const c = brandColor(b); return { brand:b, bars:[
+      { segs:[{ v:t.planMedios, color:c, tip:`${b} · Plan de medios: ${money(t.planMedios)}` }, { v:t.planMerchV, color:c+"80", tip:`${b} · Plan de merchandising: ${money(t.planMerchV)}` }] },
+      { segs:[{ v:t.presAct, color:"#2e9c5c", tip:`${b} · Ejecutado en actividades: ${money(t.presAct)}` }] } ]}; });
+    barsLegend = legend([["#3b6bc4","Plan de medios (color de marca)"],["#3b6bc480","Plan de merchandising (tono claro)"],["#2e9c5c","Ejecutado en actividades"]]);
+    fmtB = moneyShort; donutFmt = moneyShort; donutLabel = "planeado";
+    donutItems = S.map(([b,t])=>({ label:b, value:t.planTotal, color:brandColor(b) }));
+  }else{
+    const isP = metric === "prospectos";
+    titleBars = (isP ? "Prospectos" : "Ventas") + ": meta vs logrado"; titleDonut = (isP ? "Prospectos" : "Ventas") + " logrados por marca";
+    barsData = S.map(([b,t])=>{ const c = brandColor(b), meta = isP ? t.metaPros : t.metaVentas, log = isP ? t.pros : t.ven; return { brand:b, bars:[
+      { segs:[{ v:meta, color:c+"55", tip:`${b} · Meta del plan: ${meta}` }] },
+      { segs:[{ v:log, color:c, tip:`${b} · Logrado: ${log}` }] } ]}; });
+    barsLegend = legend([["#8b93a555","Meta del plan"],["#8b93a5","Logrado (bitácoras)"]]);
+    fmtB = n => String(n); donutFmt = n => String(n); donutLabel = "logrados";
+    donutItems = S.map(([b,t])=>({ label:b, value: isP ? t.pros : t.ven, color:brandColor(b) }));
+  }
+  const estadoData = S.map(([b,t])=>({ brand:b, bars:[{ segs: ESTADOS_ACTIVIDAD.map(e=>({ v:t.items.filter(r=>r.estado===e).length, color:STATUS_COLORS[e], tip:`${b} · ${e}: ${t.items.filter(r=>r.estado===e).length}` })) }] }));
+
+  const alerts = alertsList(focus || null);
+  const sevColor = ["#d64545","#d69a3e","#3b6bc4"], sevName = ["Urgente","Vencida","Por pedir"];
+  const alertsHTML = alerts.length ? alerts.slice(0,10).map(a=>`<div class="alert-row" data-goto="${a.goto}" data-marca="${esc(a.b||"")}">
+      <span class="dot" style="background:${sevColor[a.sev]}"></span>
+      <div><b>${esc(a.b||"Sin marca")}</b> · ${esc(a.tipo)} <span class="pill" style="background:${sevColor[a.sev]}22;color:${sevColor[a.sev]}">${sevName[a.sev]}</span><div class="muted">${esc(a.texto)}</div></div></div>`).join("")
+      + (alerts.length>10 ? `<div class="muted" style="padding:8px 6px">+ ${alerts.length-10} alertas más</div>` : "")
+    : `<div class="empty">Todo al día: no hay actividades urgentes ni vencidas.</div>`;
+
+  return `
+    <h1>📡 Dashboard en vivo</h1>
+    <div class="sub">El trabajo de cada marca de un vistazo. Se actualiza solo cuando alguien del equipo guarda un cambio. Haz clic en una marca para enfocarla en todos los gráficos.</div>
+    <div class="toolbar">
+      <span class="pill live" id="livePill">${liveLabel()}</span>
+      ${seg("data-metric", [["inversion","💰 Inversión"],["prospectos","👥 Prospectos"],["ventas","🚗 Ventas"]], metric)}
+    </div>
+    ${filterBar(null, { noBrand:true, period:true })}
+    ${focus ? `<div class="focusbar">Enfocado en <b>${esc(focus)}</b> · período: ${esc(periodo)} <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" data-focus="">Quitar enfoque</button></div>` : ""}
+    <div class="kpis">${kpis}</div>
+    <div class="cards">${cards}</div>
+    <div class="grid2">
+      <div class="report-block"><h3>${titleBars}</h3>${barsLegend}${barsChart(barsData, fmtB)}</div>
+      <div class="report-block"><h3>${titleDonut}</h3>${donutChart(donutItems, donutFmt, donutLabel)}</div>
+    </div>
+    <div class="grid2">
+      <div class="report-block"><h3 style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">Evolución de ${metric==="ventas"?"ventas":"prospectos"} ${seg("data-cum", [["0","Diario"],["1","Acumulado"]], DASH.cum?"1":"0")}</h3>${trendChart(brands)}</div>
+      <div class="report-block"><h3>Estado de las actividades por marca</h3>${legend(ESTADOS_ACTIVIDAD.map(e=>[STATUS_COLORS[e], e]))}${barsChart(estadoData, n=>n+" act.")}</div>
+    </div>
+    <div class="report-block"><h3>🔔 Requiere atención ${focus ? "— "+esc(focus) : ""}</h3>${alertsHTML}</div>
+  `;
+}
+
+/* =========================================================
    8. HOJA DE GESTIÓN POR MARCA
       Conecta plan de medios, plan de merchandising, playas,
-      pauta, exhibiciones, pedidos, leads e inventario usando
+      pauta, exhibiciones, pedidos y leads usando
       la marca como hilo común. Respeta el filtro de período.
    ========================================================= */
 const CSV_SECTIONS = [];
@@ -946,7 +1284,7 @@ const CSV_SECTIONS = [];
 function statsFor(brand){
   const R = k => rowsFor(k, brand);
   const medios = R("planMedios"), pmerch = R("planMerch"), play = R("Playas"), pau = R("pauta"), exh = R("exhibiciones");
-  const ped = R("merchandising"), leads = R("leads"), inv = R("inventario");
+  const ped = R("merchandising"), leads = R("leads");
   const act = [...play, ...pau, ...exh];
   let pros = 0, ven = 0;
   act.forEach(r => { const t = bitTotals(r); pros += t.prospectos; ven += t.ventas; });
@@ -956,13 +1294,12 @@ function statsFor(brand){
   const merchAvance = pedTotal > 0 ? pct(pedFin, pedTotal)
                     : (pmerch.length ? pct(pmerch.filter(r=>r.estado==="Finalizado").length, pmerch.length) : null);
   return {
-    medios, pmerch, play, pau, exh, ped, leads, inv, act,
+    medios, pmerch, play, pau, exh, ped, leads, act, items: [...act, ...medios],
     planMedios, planMerchV, planTotal: planMedios + planMerchV,
     metaPros: sumOf(medios,"prospectos"), metaVentas: sumOf(medios,"objetivoVentas"),
     pros, ven, presAct: sumOf(act,"presupuesto"),
     aprobado: sumOf(ped,"presupuestoAprobado"), merchAvance,
     leadsN: leads.length, leadsCerrados: leads.filter(r=>r.estado==="Cerrado").length,
-    invUnits: inv.filter(r=>r.estado!=="Vendido").reduce((s,r)=>s+(Number(r.cantidad)||0),0),
   };
 }
 
@@ -1005,7 +1342,6 @@ function renderGestion(){
     kpi("Costo por prospecto", s.pros ? money(s.presAct/s.pros) : "—", "Presupuesto de actividades ÷ prospectos"),
     kpi("Costo por venta", s.ven ? money(s.presAct/s.ven) : "—", "Presupuesto de actividades ÷ ventas"),
     kpi("Leads comerciales", s.leadsN, `${s.leadsCerrados} cerrados`),
-    kpi("Unidades en inventario", s.invUnits, "Disponibles + reservadas"),
   ].join("");
 
   const cumplidas = s.act.filter(r=>r.estado==="Cumplido").length;
@@ -1056,16 +1392,14 @@ function renderGestion(){
       ["TOTAL", money(s.aprobado), String(sumOf(s.ped,"total")), String(sumOf(s.ped,"pendiente")), String(sumOf(s.ped,"pedido")), String(sumOf(s.ped,"enviado")), String(sumOf(s.ped,"finalizado")), pctTxt(pct(sumOf(s.ped,"finalizado"), sumOf(s.ped,"total")))]);
 
     const leadChips = MODULES.leads.statusOptions.map(o=>`<span class="chip">${o}: <b>${s.leads.filter(r=>r.estado===o).length}</b></span>`).join("");
-    const invChips = MODULES.inventario.statusOptions.map(o=>`<span class="chip">${o}: <b>${s.inv.filter(r=>r.estado===o).reduce((a,r)=>a+(Number(r.cantidad)||0),0)}</b></span>`).join("");
     detalle += `<div class="report-block"><h3>Comercial — ${esc(nombre)}</h3>
-      <div class="chips"><span class="chip"><b>Leads</b></span>${leadChips}</div>
-      <div class="chips" style="margin-bottom:0"><span class="chip"><b>Inventario (unidades)</b></span>${invChips}</div>
+      <div class="chips" style="margin-bottom:0"><span class="chip"><b>Leads</b></span>${leadChips}</div>
     </div>`;
   }
 
   return `
     <h1>🧭 Gestión por marca</h1>
-    <div class="sub">Todo lo planeado y ejecutado por marca en un solo lugar: plan de medios, plan de merchandising, playas, pauta, exhibiciones, pedidos, leads e inventario. Período: ${esc(periodo)}.</div>
+    <div class="sub">Todo lo planeado y ejecutado por marca en un solo lugar: plan de medios, plan de merchandising, playas, pauta, exhibiciones, pedidos y leads. Período: ${esc(periodo)}.</div>
     <div class="tabs">${tabs}</div>
     ${filterBar(null, { noBrand:true, period:true })}
     <div class="toolbar"><div></div>${DL ? `<button class="btn btn-ghost" data-role="export">⬇ Descargar reporte (CSV)</button>` : ""}</div>
@@ -1148,8 +1482,7 @@ function renderReportes(){
   const planMediosV = sumOf(DATA.planMedios||[], "valor");
   const planMerchV = (DATA.planMerch||[]).reduce((s,r)=>s+totalMerch(r),0);
   const presupuestoMerch = sumOf(DATA.merchandising||[], "presupuestoAprobado");
-  const inv = DATA.inventario||[], leads = DATA.leads||[];
-  const unidadesDisponibles = inv.filter(r=>r.estado!=="Vendido").reduce((s,r)=>s+(Number(r.cantidad)||0),0);
+  const leads = DATA.leads||[];
   const cerrados = leads.filter(r=>r.estado==="Cerrado").length;
   const conversion = leads.length ? Math.round((cerrados/leads.length)*100) : 0;
 
@@ -1176,7 +1509,6 @@ function renderReportes(){
       ${kpi("Presupuesto merchandising aprobado", money(presupuestoMerch))}
       ${kpi("Prospectos generados", prospectos)}
       ${kpi("Ventas generadas", ventas)}
-      ${kpi("Unidades disponibles", unidadesDisponibles)}
       ${kpi("Conversión de leads", conversion + "%")}
     </div>
     ${provBlock}
@@ -1190,6 +1522,23 @@ function renderReportes(){
 (async function start(){
   document.getElementById("content").innerHTML = '<div class="empty">Cargando información…</div>';
   await initStore();
+  if(sharedMode) subscribeLive();
+  READY = true;
+  touchLive();
+  // Tooltips de los gráficos
+  const tip = document.getElementById("tip");
+  document.addEventListener("mousemove", e => {
+    const t = e.target.closest && e.target.closest("[data-tip]");
+    if(!t){ tip.style.display = "none"; return; }
+    tip.textContent = t.getAttribute("data-tip"); tip.style.display = "block";
+    tip.style.left = Math.max(8, Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8)) + "px";
+    tip.style.top = (e.clientY + 16) + "px";
+  });
+  // Esc cierra cualquier ventana abierta
+  document.addEventListener("keydown", e => {
+    const mr = document.getElementById("modalRoot");
+    if(e.key === "Escape" && mr.innerHTML.trim() !== ""){ mr.innerHTML = ""; render(); }
+  });
   render();
 })();
 </script>
