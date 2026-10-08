@@ -23,10 +23,10 @@ body{
   background:var(--bg); color:var(--text);
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
-#app{display:flex; height:100vh; overflow:hidden}
+#app{display:flex; height:100%; overflow:hidden}
 aside{
   width:230px; flex-shrink:0; background:var(--sidebar); color:var(--sidebar-text);
-  display:flex; flex-direction:column; padding-top:env(safe-area-inset-top,0px); overflow-y:auto;
+  display:flex; flex-direction:column; overflow-y:auto;
 }
 aside .brand{padding:20px 18px; border-bottom:1px solid #262d3d}
 aside .brand b{color:#fff; font-size:16px; display:block}
@@ -46,10 +46,12 @@ nav button.active{background:var(--accent); color:#fff; font-weight:600}
 main{flex:1; overflow-y:auto; padding:26px 30px}
 h1{font-size:20px; margin:0 0 4px}
 .sub{color:var(--muted); font-size:13px; margin-bottom:20px}
+.muted{color:var(--muted); font-weight:400}
 .kpis{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px}
 .kpi{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 16px; min-width:140px}
 .kpi .l{font-size:11px; color:var(--muted); font-weight:600}
 .kpi .v{font-size:19px; font-weight:700; margin-top:2px}
+.kpi .s{font-size:11px; color:var(--muted); margin-top:3px}
 .toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; flex-wrap:wrap}
 .btn{border:none; border-radius:8px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer}
 .btn-primary{background:var(--accent); color:#fff}
@@ -57,13 +59,28 @@ h1{font-size:20px; margin:0 0 4px}
 .table-wrap{overflow-x:auto; border-radius:10px; border:1px solid var(--border)}
 table{width:100%; border-collapse:collapse; background:var(--panel); min-width:640px}
 th,td{padding:10px 12px; font-size:13px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap}
+td.desc{white-space:normal; min-width:200px; max-width:320px; line-height:1.4}
 th{font-size:11px; text-transform:uppercase; color:var(--muted); font-weight:700; background:rgba(0,0,0,.02)}
 tr:last-child td{border-bottom:none}
+tr.total-row td{font-weight:700; background:rgba(0,0,0,.04)}
+tr.clickrow{cursor:pointer}
+tr.clickrow:hover td{background:rgba(59,107,196,.08)}
 .badge{padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:600; display:inline-block}
 .actions{white-space:nowrap}
 .actions button{background:none; border:none; cursor:pointer; color:var(--muted); font-size:13px; margin-right:8px}
 .actions button:hover{color:var(--accent)}
 .empty{padding:30px; text-align:center; color:var(--muted); font-size:13px}
+.inl{width:96px; padding:5px 7px; border:1px solid var(--border); border-radius:6px; background:var(--panel); color:var(--text); font-size:13px; font-family:inherit}
+.inl:focus{outline:2px solid var(--accent); border-color:transparent}
+.chips{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px}
+.chip{font-size:11.5px; background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px 10px; color:var(--muted)}
+.chip b{color:var(--text)}
+.filters{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px}
+.fgroup label{display:block; font-size:10.5px; font-weight:700; color:var(--muted); margin-bottom:3px; text-transform:uppercase}
+.fgroup select{padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:13px; font-family:inherit}
+.tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px}
+.tab{border:1px solid var(--border); background:var(--panel); color:var(--text); padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit}
+.tab.on{background:var(--accent); color:#fff; border-color:var(--accent)}
 .overlay{position:fixed; inset:0; background:rgba(10,14,22,.45); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px}
 .modal{background:var(--panel); border-radius:14px; padding:22px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto}
 .modal h2{font-size:15px; margin:0 0 16px}
@@ -79,10 +96,10 @@ tr:last-child td{border-bottom:none}
 .report-block{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px}
 .report-block h3{font-size:13px; margin:0 0 10px}
 .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12.5px}
-.bar-row .lab{width:150px; flex-shrink:0; color:var(--muted)}
+.bar-row .lab{width:170px; flex-shrink:0; color:var(--muted)}
 .bar-track{flex:1; height:10px; background:var(--border); border-radius:6px; overflow:hidden}
 .bar-fill{height:100%; border-radius:6px}
-.bar-row .num{width:34px; text-align:right; font-weight:700}
+.bar-row .num{width:46px; text-align:right; font-weight:700}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px}
 </style>
@@ -100,19 +117,118 @@ tr:last-child td{border-bottom:none}
 
 <script>
 /* =========================================================
+   0. CATÁLOGOS COMPARTIDOS (la marca es el hilo que conecta
+      planes, actividades, merchandising, leads e inventario)
+   ========================================================= */
+const MARCAS = ["GWM","JMC","TRUCKS & VANS","SUBARU"];          // marcas principales (siempre visibles)
+const MARCAS_EXTRA = ["JAC MOTORS","CITROËN"];                   // aparecen en la hoja de gestión cuando tienen datos
+const TODAS_MARCAS = [...MARCAS, ...MARCAS_EXTRA];
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const ESTADOS_ACTIVIDAD = ["Pendiente","En curso","Cumplido","Urgente"];
+const ESTADOS_MERCH = ["Pendiente","Pedido","Enviado","Finalizado"];
+const ACTIVIDADES_MEDIOS = ["Publicidad digital","Publicidad radio","Publicidad exterior","Prensa / revistas","Evento / activación","Otros"];
+const OBJETIVOS = ["Leads","Reconocimiento","Tráfico","Ventas","Otro"];
+const MATERIALES_POP = ["OTROS","IMPRESOS","TEXTIL","INFLABLES","VALLAS Y PENDONES","PAPELERÍA"];
+
+// Comparación de marcas tolerante: "Subaru" = "SUBARU", "Trucks&Vans" = "TRUCKS & VANS", "JAC" = "JAC MOTORS"
+const keyM = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+const MARCA_ALIAS = { JAC:"JACMOTORS", TRUCKSANDVANS:"TRUCKSVANS" };
+const sameMarca = (a,b) => { const x = keyM(a), y = keyM(b); return (MARCA_ALIAS[x]||x) === (MARCA_ALIAS[y]||y); };
+
+const sumOf = (list,k) => list.reduce((s,r)=>s+(Number(r[k])||0),0);
+const totalMerch = r => (Number(r.cantidad)||0) * (Number(r.valorUnitario)||0);
+const money = n => "$ " + Number(n||0).toLocaleString("es-CO", { maximumFractionDigits:0 });
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct = (a,b) => b>0 ? Math.round(a/b*100) : null;
+const pctTxt = v => (v===null || v===undefined) ? "—" : v+"%";
+const kpi = (l,v,sub) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div>${sub?`<div class="s">${sub}</div>`:""}</div>`;
+
+function fechaLabel(r){
+  const a = r.fechaInicio, b = r.fechaFin;
+  if(!a) return "—";
+  const d1 = new Date(a+"T00:00:00"), d2 = new Date((b||a)+"T00:00:00");
+  if(isNaN(d1) || isNaN(d2)) return "—";
+  const m = d => MESES[d.getMonth()];
+  if(!b || a===b) return `${d1.getDate()} de ${m(d1)}`;
+  if(d1.getMonth()===d2.getMonth() && d1.getFullYear()===d2.getFullYear()) return `${d1.getDate()} al ${d2.getDate()} de ${m(d1)}`;
+  return `${d1.getDate()} de ${m(d1)} al ${d2.getDate()} de ${m(d2)}`;
+}
+
+/* =========================================================
    1. DEFINICIÓN DE MÓDULOS (config-driven: agregar un módulo
       nuevo, un campo nuevo o un proveedor nuevo solo requiere
       tocar esta sección; todo lo demás se genera solo).
    ========================================================= */
-const ESTADOS_ACTIVIDAD = ["Pendiente","En curso","Cumplido","Urgente"];
+const brandSelect = (extra={}) => ({ key:"marca", label:"Marca", type:"select", optionsFn:()=>brandOptions(), required:true, ...extra });
 
 const MODULES = {
+  /* ---------- PLANEACIÓN (réplica de los planes en Excel) ---------- */
+  planMedios: {
+    label: "Plan de medios", icon: "📺", accent: "#2c4a78", group:"Planeación",
+    groupByField:"marca", groupOptions:MARCAS, periodType:"mes",
+    statusField:"estado", statusOptions:ESTADOS_ACTIVIDAD,
+    footerTotal:true, inlineEdit:true, showTextarea:true,
+    singular:"actividad", plural:"actividades", newLabel:"+ Nueva actividad",
+    sumFields:["prospectos","objetivoVentas","valor"],
+    tableCols:["actividad","descripcion","objetivo","prospectos","objetivoVentas","fecha","valor"],
+    computed:[{ key:"fecha", label:"Fecha", fn:r=>fechaLabel(r) }],
+    kpiDefs:[
+      { label:"Inversión planeada", fn:rs=>money(sumOf(rs,"valor")) },
+      { label:"Prospectos meta", fn:rs=>sumOf(rs,"prospectos") },
+      { label:"Objetivo de ventas", fn:rs=>sumOf(rs,"objetivoVentas") },
+    ],
+    fields:[
+      brandSelect(),
+      { key:"ciudad", label:"Ciudad", type:"text", default:"Cúcuta" },
+      { key:"mes", label:"Mes", type:"select", options:MESES, required:true, default:()=>FILTERS.mes || MESES[new Date().getMonth()] },
+      { key:"anio", label:"Año", type:"number", default:()=>FILTERS.anio || new Date().getFullYear() },
+      { key:"actividad", label:"Actividad", type:"select", options:ACTIVIDADES_MEDIOS, required:true },
+      { key:"descripcion", label:"Descripción", type:"textarea", required:true },
+      { key:"objetivo", label:"Objetivo", type:"select", options:OBJETIVOS },
+      { key:"prospectos", label:"Prospectos", type:"number" },
+      { key:"objetivoVentas", label:"Objetivo ventas", type:"number" },
+      { key:"fechaInicio", label:"Fecha de inicio", type:"date" },
+      { key:"fechaFin", label:"Fecha de fin", type:"date" },
+      { key:"valor", label:"Valor", type:"currency" },
+      { key:"estado", label:"Estado", type:"select", options:ESTADOS_ACTIVIDAD, default:"Pendiente" },
+    ],
+  },
+  planMerch: {
+    label: "Plan de merchandising", icon: "🎽", accent: "#c2570c", group:"Planeación",
+    groupByField:"marca", groupOptions:MARCAS, periodType:"mes",
+    statusField:"estado", statusOptions:ESTADOS_MERCH,
+    footerTotal:true, inlineEdit:true, showTextarea:true,
+    singular:"material", plural:"materiales", newLabel:"+ Nuevo material",
+    sumFields:["cantidad"],
+    tableCols:["material","descripcion","objetivo","cantidad","valorUnitario","valorTotal"],
+    computed:[{ key:"valorTotal", label:"Valor total", fn:r=>money(totalMerch(r)), sum:rs=>money(rs.reduce((s,r)=>s+totalMerch(r),0)) }],
+    kpiDefs:[
+      { label:"Inversión planeada", fn:rs=>money(rs.reduce((s,r)=>s+totalMerch(r),0)) },
+      { label:"Unidades planeadas", fn:rs=>sumOf(rs,"cantidad") },
+      { label:"Finalizados", fn:rs=>rs.filter(r=>r.estado==="Finalizado").length },
+    ],
+    fields:[
+      brandSelect(),
+      { key:"ciudad", label:"Ciudad", type:"text", default:"Cúcuta" },
+      { key:"mes", label:"Mes", type:"select", options:MESES, required:true, default:()=>FILTERS.mes || MESES[new Date().getMonth()] },
+      { key:"anio", label:"Año", type:"number", default:()=>FILTERS.anio || new Date().getFullYear() },
+      { key:"material", label:"Material P.O.P.", type:"select", options:MATERIALES_POP, required:true, default:"OTROS" },
+      { key:"descripcion", label:"Descripción", type:"textarea", required:true },
+      { key:"objetivo", label:"Objetivo", type:"text" },
+      { key:"cantidad", label:"Cantidad", type:"number", required:true },
+      { key:"valorUnitario", label:"Valor unitario", type:"currency", hint:"El valor total se calcula solo: cantidad × valor unitario." },
+      { key:"estado", label:"Estado", type:"select", options:ESTADOS_MERCH, default:"Pendiente" },
+    ],
+  },
+
+  /* ---------- ACTIVIDADES (ejecución y bitácora) ---------- */
   Playas: {
     label: "Playas de venta", icon: "🏬", accent: "#3b6bc4", group:"Actividades",
+    periodType:"range",
     statusField: "estado", statusOptions: ESTADOS_ACTIVIDAD,
     currencyField: "presupuesto", hasBitacora: true,
     fields: [
-      { key:"marca", label:"Marca", type:"text", required:true },
+      brandSelect(),
       { key:"nombre", label:"Plaza / ubicación", type:"text", required:true },
       { key:"descripcion", label:"Descripción", type:"textarea", required:true },
       { key:"proveedor", label:"Proveedor", type:"dynamicSelect", source:"proveedores" },
@@ -125,10 +241,11 @@ const MODULES = {
   },
   pauta: {
     label: "Pauta publicitaria", icon: "📣", accent: "#7a5cc9", group:"Actividades",
+    periodType:"range",
     statusField: "estado", statusOptions: ESTADOS_ACTIVIDAD,
     currencyField: "presupuesto", hasBitacora: true,
     fields: [
-      { key:"marca", label:"Marca", type:"text", required:true },
+      brandSelect(),
       { key:"contenido", label:"Contenido a pautar", type:"textarea", required:true },
       { key:"descripcionMarca", label:"Descripción de la marca", type:"textarea" },
       { key:"referencias", label:"Referencias a pautar", type:"textarea" },
@@ -143,10 +260,11 @@ const MODULES = {
   },
   exhibiciones: {
     label: "Exhibición en CC", icon: "🏢", accent: "#2e9c5c", group:"Actividades",
+    periodType:"range",
     statusField: "estado", statusOptions: ESTADOS_ACTIVIDAD,
     currencyField: "presupuesto", hasBitacora: true,
     fields: [
-      { key:"marca", label:"Marca", type:"text", required:true },
+      brandSelect(),
       { key:"centroComercial", label:"Centro comercial", type:"text", required:true },
       { key:"descripcion", label:"Descripción", type:"textarea" },
       { key:"proveedor", label:"Proveedor", type:"dynamicSelect", source:"proveedores" },
@@ -157,6 +275,62 @@ const MODULES = {
       { key:"estado", label:"Estado", type:"select", options:ESTADOS_ACTIVIDAD },
     ],
   },
+  merchandising: {
+    label: "Pedidos de merchandising", icon: "🎁", accent: "#c2570c", group:"Actividades",
+    reportType:"pedidos",
+    groupByField: "marca", groupOptions: MARCAS,
+    sumFields: ["presupuestoAprobado","total","pendiente","pedido","enviado","finalizado"],
+    showTextarea: true,
+    inlineEdit: true,
+    plural:"pedidos", newLabel:"+ Nuevo pedido",
+    computed: [
+      { label:"Avance", fn:(r)=> (Number(r.total)>0 ? Math.round((Number(r.finalizado)||0)/Number(r.total)*100) : 0) + "%" },
+    ],
+    fields: [
+      brandSelect(),
+      { key:"descripcion", label:"Descripción", type:"textarea", required:true },
+      { key:"presupuestoAprobado", label:"Presupuesto aprobado", type:"currency" },
+      { key:"total", label:"Total (unidades)", type:"number" },
+      { key:"pendiente", label:"Pendiente", type:"number",
+        auto:(r)=> Math.max(0, (Number(r.total)||0) - (Number(r.pedido)||0) - (Number(r.enviado)||0) - (Number(r.finalizado)||0)),
+        hint:"Si lo dejas vacío se calcula solo: Total − Pedido − Enviado − Finalizado. También puedes escribirlo a mano." },
+      { key:"pedido", label:"Pedido", type:"number" },
+      { key:"enviado", label:"Enviado", type:"number" },
+      { key:"finalizado", label:"Finalizado", type:"number" },
+    ],
+  },
+
+  /* ---------- COMERCIAL ---------- */
+  leads: {
+    label: "Leads", icon: "🎯", accent: "#2e9c5c", group:"Comercial",
+    brandField:"marcaInteres",
+    statusField: "estado",
+    statusOptions: ["Nuevo","Contactado","Test drive","Cerrado","Perdido"],
+    fields: [
+      { key:"nombre", label:"Nombre del cliente", type:"text", required:true },
+      { key:"telefono", label:"Teléfono", type:"text" },
+      { key:"marcaInteres", label:"Marca de interés", type:"select", optionsFn:()=>brandOptions() },
+      { key:"origen", label:"Origen", type:"select", options:["Meta","Radio","Presencial","Referido","Sitio web"] },
+      { key:"asesor", label:"Asesor asignado", type:"text" },
+      { key:"estado", label:"Estado", type:"select", options:["Nuevo","Contactado","Test drive","Cerrado","Perdido"] },
+    ],
+  },
+  inventario: {
+    label: "Inventario", icon: "🚗", accent: "#8a5a16", group:"Comercial",
+    statusField: "estado", statusOptions: ["Disponible","Reservado","Vendido"],
+    groupByField: "marca",
+    groupOptions: MARCAS,
+    sumField: "cantidad",
+    newLabel:"+ Nueva unidad", plural:"unidades registradas",
+    fields: [
+      brandSelect(),
+      { key:"titulo", label:"Título / Modelo", type:"text", required:true },
+      { key:"cantidad", label:"Cantidad", type:"number", required:true },
+      { key:"estado", label:"Estado", type:"select", options:["Disponible","Reservado","Vendido"] },
+    ],
+  },
+
+  /* ---------- CONTROL ---------- */
   proveedores: {
     label: "Proveedores", icon: "🤝", accent: "#d69a3e", group:"Control",
     statusField: "estado", statusOptions: ["Activo","Inactivo"],
@@ -174,51 +348,29 @@ const MODULES = {
       { key:"estado", label:"Estado", type:"select", options:["Activo","Inactivo"] },
     ],
   },
-  leads: {
-    label: "Leads", icon: "🎯", accent: "#2e9c5c", group:"Comercial",
-    statusField: "estado",
-    statusOptions: ["Nuevo","Contactado","Test drive","Cerrado","Perdido"],
-    fields: [
-      { key:"nombre", label:"Nombre del cliente", type:"text", required:true },
-      { key:"telefono", label:"Teléfono", type:"text" },
-      { key:"marcaInteres", label:"Marca de interés", type:"text" },
-      { key:"origen", label:"Origen", type:"select", options:["Meta","Radio","Presencial","Referido","Sitio web"] },
-      { key:"asesor", label:"Asesor asignado", type:"text" },
-      { key:"estado", label:"Estado", type:"select", options:["Nuevo","Contactado","Test drive","Cerrado","Perdido"] },
-    ],
-  },
-  inventario: {
-    label: "Inventario", icon: "🚗", accent: "#8a5a16", group:"Comercial",
-    statusField: "estado", statusOptions: ["Disponible","Reservado","Vendido"],
-    groupByField: "marca",
-    groupOptions: ["GWM","JMC","TRUCKS & VANS","SUBARU"],
-    sumField: "cantidad",
-    fields: [
-      { key:"marca", label:"Marca", type:"select", options:["GWM","JMC","TRUCKS & VANS","SUBARU"], required:true },
-      { key:"titulo", label:"Título / Modelo", type:"text", required:true },
-      { key:"cantidad", label:"Cantidad", type:"number", required:true },
-      { key:"estado", label:"Estado", type:"select", options:["Disponible","Reservado","Vendido"] },
-    ],
-  },
 };
 const STATUS_COLORS = {
   "Pendiente":"#3b6bc4","En curso":"#d69a3e","Cumplido":"#2e9c5c","Urgente":"#d64545",
+  "Pedido":"#3b6bc4","Enviado":"#7a5cc9","Finalizado":"#2e9c5c",
   "Nuevo":"#3b6bc4","Contactado":"#d69a3e","Test drive":"#7a5cc9","Cerrado":"#2e9c5c","Perdido":"#d64545",
   "Disponible":"#2e9c5c","Reservado":"#d69a3e","Vendido":"#8b93a5",
   "Activo":"#2e9c5c","Inactivo":"#8b93a5",
 };
+const MERCH_COLORS = { pendiente:"#d69a3e", pedido:"#3b6bc4", enviado:"#7a5cc9", finalizado:"#2e9c5c" };
 
 /* =========================================================
    2. CAPA DE DATOS: intenta la base compartida (db); si no
       está disponible, usa localStorage sin romper la app.
    ========================================================= */
-let db = null;
+let db = null, DL = null;
 let sharedMode = false;
 const DATA = {};
 Object.keys(MODULES).forEach(k => DATA[k] = []);
+const FILTERS = { marca:"", mes:"", anio:"" };   // filtros globales: se mantienen al cambiar de módulo
 
 async function initStore(){
   try{ db = await claude.use("db"); }catch(e){ db = null; }
+  try{ DL = await claude.use("downloads"); }catch(e){ DL = null; }
   sharedMode = !!db;
   const badge = document.getElementById("syncBadge");
   badge.className = "sync-badge " + (sharedMode ? "sync-ok" : "sync-local");
@@ -277,9 +429,8 @@ async function deleteRecord(key, id){
 }
 
 /* =========================================================
-   3. UTILIDADES DE FORMATO
+   3. MARCAS, PERÍODOS Y FILTROS (el "pegamento" entre módulos)
    ========================================================= */
-const money = n => "$ " + Number(n||0).toLocaleString("es-CO", { maximumFractionDigits:0 });
 const badge = (text) => {
   const c = STATUS_COLORS[text] || "#7a8496";
   return `<span class="badge" style="background:${c}22;color:${c}">${text}</span>`;
@@ -289,15 +440,101 @@ function bitTotals(r){
   return { dias:b.length, prospectos:b.reduce((s,e)=>s+(Number(e.prospectos)||0),0), ventas:b.reduce((s,e)=>s+(Number(e.ventas)||0),0) };
 }
 
+const brandFieldOf = mod => (mod && mod.brandField !== undefined) ? mod.brandField : ((mod && mod.fields.some(f=>f.key==="marca")) ? "marca" : null);
+
+// Todas las marcas seleccionables: las oficiales + cualquier otra que ya exista en los datos
+function brandOptions(){
+  const list = [...TODAS_MARCAS];
+  Object.entries(MODULES).forEach(([k,m])=>{
+    const bf = brandFieldOf(m);
+    if(bf) (DATA[k]||[]).forEach(r=>{ const v=r[bf]; if(v && !list.some(o=>sameMarca(o,v))) list.push(v); });
+  });
+  return list;
+}
+// Marcas que se muestran en la hoja de gestión: las 4 principales + las que tengan datos
+function brandsWithData(){
+  const list = [...MARCAS];
+  Object.entries(MODULES).forEach(([k,m])=>{
+    const bf = brandFieldOf(m);
+    if(bf) (DATA[k]||[]).forEach(r=>{
+      const v = r[bf];
+      if(v && !list.some(o=>sameMarca(o,v))) list.push(TODAS_MARCAS.find(o=>sameMarca(o,v)) || v);
+    });
+  });
+  return list;
+}
+function yearOptions(){
+  const ys = new Set([new Date().getFullYear()]);
+  ["planMedios","planMerch"].forEach(k=>(DATA[k]||[]).forEach(r=>{ if(r.anio) ys.add(Number(r.anio)); }));
+  ["Playas","pauta","exhibiciones"].forEach(k=>(DATA[k]||[]).forEach(r=>[r.fechaInicio,r.fechaFin].forEach(d=>{ if(d) ys.add(Number(String(d).slice(0,4))); })));
+  return [...ys].filter(Boolean).sort();
+}
+
+function matchPeriod(mod, r){
+  const mes = FILTERS.mes, anio = FILTERS.anio;
+  if(!mes && !anio) return true;
+  if(mod.periodType === "mes"){
+    if(mes && r.mes !== mes) return false;
+    if(anio && String(r.anio) !== String(anio)) return false;
+    return true;
+  }
+  if(mod.periodType === "range"){
+    const a = r.fechaInicio, b = r.fechaFin || r.fechaInicio;
+    if(!a) return true;
+    const s = new Date(a+"T00:00:00"), e = new Date(b+"T00:00:00");
+    if(isNaN(s) || isNaN(e)) return true;
+    const m = mes ? MESES.indexOf(mes) : null;
+    const y = anio ? Number(anio) : null;
+    if(y !== null){
+      const ws = new Date(y, m!==null ? m : 0, 1);
+      const we = m!==null ? new Date(y, m+1, 0) : new Date(y, 11, 31);
+      return s <= we && e >= ws;
+    }
+    // solo mes (cualquier año): algún mes del rango debe coincidir
+    const cur = new Date(s.getFullYear(), s.getMonth(), 1);
+    while(cur <= e){ if(cur.getMonth() === m) return true; cur.setMonth(cur.getMonth()+1); }
+    return false;
+  }
+  return true;
+}
+
+// Registros de un módulo filtrados por marca (opcional) y por el período activo
+function rowsFor(key, brand){
+  const mod = MODULES[key], bf = brandFieldOf(mod);
+  return (DATA[key]||[]).filter(r => (!brand || !bf || sameMarca(r[bf], brand)) && matchPeriod(mod, r));
+}
+const viewRows = key => rowsFor(key, FILTERS.marca);
+
+function filterBar(mod, opts){
+  opts = opts || {};
+  const bf = opts.noBrand ? null : brandFieldOf(mod);
+  const hasPeriod = !!opts.period || !!(mod && mod.periodType);
+  if(!bf && !hasPeriod) return "";
+  let h = `<div class="filters">`;
+  if(bf){
+    h += `<div class="fgroup"><label>Marca</label><select data-filter="marca"><option value="">Todas</option>${brandOptions().map(b=>`<option ${b===FILTERS.marca?"selected":""}>${esc(b)}</option>`).join("")}</select></div>`;
+  }
+  if(hasPeriod){
+    h += `<div class="fgroup"><label>Mes</label><select data-filter="mes"><option value="">Todos</option>${MESES.map(m=>`<option ${m===FILTERS.mes?"selected":""}>${m}</option>`).join("")}</select></div>`;
+    h += `<div class="fgroup"><label>Año</label><select data-filter="anio"><option value="">Todos</option>${yearOptions().map(y=>`<option ${String(y)===String(FILTERS.anio)?"selected":""}>${y}</option>`).join("")}</select></div>`;
+  }
+  if(FILTERS.marca || FILTERS.mes || FILTERS.anio) h += `<button class="btn btn-ghost" data-clear="1">Limpiar filtros</button>`;
+  return h + `</div>`;
+}
+
 /* =========================================================
    4. NAVEGACIÓN (agrupada por categoría)
    ========================================================= */
-let activeModule = "Playas";
+let activeModule = "gestion";
 
 function renderNav(){
   const nav = document.getElementById("nav");
   nav.innerHTML = "";
-  const items = [...Object.entries(MODULES), ["reportes", { label:"Reportes", icon:"📊", group:"Control" }]];
+  const items = [
+    ["gestion", { label:"Gestión por marca", icon:"🧭", group:"Panel" }],
+    ...Object.entries(MODULES),
+    ["reportes", { label:"Reportes", icon:"📊", group:"Control" }],
+  ];
   let lastGroup = null;
   items.forEach(([key, mod]) => {
     if(mod.group && mod.group !== lastGroup){
@@ -314,10 +551,15 @@ function renderNav(){
 }
 
 function render(){
+  const m = document.querySelector("main");
+  const st = m ? m.scrollTop : 0;
   renderNav();
   const content = document.getElementById("content");
-  content.innerHTML = activeModule === "reportes" ? renderReportes() : renderModuleView(activeModule);
+  content.innerHTML = activeModule === "reportes" ? renderReportes()
+                    : activeModule === "gestion" ? renderGestion()
+                    : renderModuleView(activeModule);
   wireModuleEvents();
+  if(m) m.scrollTop = st;
 }
 
 /* =========================================================
@@ -326,24 +568,24 @@ function render(){
    ========================================================= */
 function renderModuleView(key){
   const mod = MODULES[key];
-  const rows = DATA[key];
+  const rows = viewRows(key);
   if(mod.groupByField) return renderGroupedView(key, mod, rows);
 
   const total = rows.length;
-  const kpis = [`<div class="kpi"><div class="l">Registros</div><div class="v">${total}</div></div>`];
+  const kpis = [kpi("Registros", total)];
   if(mod.currencyField){
     const sum = rows.reduce((s,r)=>s+(Number(r[mod.currencyField])||0),0);
-    kpis.push(`<div class="kpi"><div class="l">${mod.fields.find(f=>f.key===mod.currencyField).label} (total)</div><div class="v">${money(sum)}</div></div>`);
+    kpis.push(kpi(`${mod.fields.find(f=>f.key===mod.currencyField).label} (total)`, money(sum)));
   }
   if(mod.hasBitacora){
     const tp = rows.reduce((s,r)=>s+bitTotals(r).prospectos,0);
     const tv = rows.reduce((s,r)=>s+bitTotals(r).ventas,0);
-    kpis.push(`<div class="kpi"><div class="l">Prospectos totales</div><div class="v">${tp}</div></div>`);
-    kpis.push(`<div class="kpi"><div class="l">Ventas totales</div><div class="v">${tv}</div></div>`);
+    kpis.push(kpi("Prospectos totales", tp));
+    kpis.push(kpi("Ventas totales", tv));
   }
   mod.statusOptions.slice(0,3).forEach(s=>{
     const c = rows.filter(r=>r[mod.statusField]===s).length;
-    kpis.push(`<div class="kpi"><div class="l">${s}</div><div class="v">${c}</div></div>`);
+    kpis.push(kpi(s, c));
   });
 
   const cols = mod.fields.filter(f=>f.type!=="textarea").slice(0,6);
@@ -354,7 +596,7 @@ function renderModuleView(key){
   const head = cols.map(f=>`<th>${f.label}</th>`).join("") + extraHeads.map(h=>`<th>${h}</th>`).join("") + "<th>Estado</th><th></th>";
   const body = rows.length ? rows.map(r => `
     <tr>
-      ${cols.map(f=>`<td>${f.type==="currency"?money(r[f.key]):(r[f.key]||"—")}</td>`).join("")}
+      ${cols.map(f=>`<td>${f.type==="currency"?money(r[f.key]):(esc(r[f.key])||"—")}</td>`).join("")}
       ${extraFns.map(fn=>`<td>${fn(r)}</td>`).join("")}
       <td>
         <select data-role="status" data-id="${r.id}" style="border:none;background:${(STATUS_COLORS[r[mod.statusField]]||"#7a8496")}22;color:${STATUS_COLORS[r[mod.statusField]]||"#7a8496"};font-weight:600;border-radius:20px;padding:3px 8px;font-size:11.5px">
@@ -366,11 +608,12 @@ function renderModuleView(key){
         <button data-role="edit" data-id="${r.id}" title="Editar">✎</button>
         <button data-role="del" data-id="${r.id}" title="Eliminar">🗑</button>
       </td>
-    </tr>`).join("") : `<tr><td colspan="${cols.length+extraHeads.length+2}" class="empty">Aún no hay registros. Crea el primero con "+ Nuevo".</td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="${cols.length+extraHeads.length+2}" class="empty">${(FILTERS.marca||FILTERS.mes||FILTERS.anio) ? "No hay registros con estos filtros." : 'Aún no hay registros. Crea el primero con "+ Nuevo".'}</td></tr>`;
 
   return `
     <h1>${mod.icon} ${mod.label}</h1>
     <div class="sub">Gestión de ${mod.label.toLowerCase()} — Fersautos.</div>
+    ${filterBar(mod)}
     <div class="kpis">${kpis.join("")}</div>
     <div class="toolbar">
       <div></div>
@@ -380,52 +623,127 @@ function renderModuleView(key){
   `;
 }
 
-/* Vista agrupada (usada por Inventario): una sección por cada valor
-   de groupByField, con subtotal de sumField y total general arriba. */
-function renderGroupedView(key, mod, rows){
-  const totalCantidad = rows.reduce((s,r)=>s+(Number(r[mod.sumField])||0),0);
-  const sumLabel = mod.fields.find(f=>f.key===mod.sumField).label;
-  const kpis = [
-    `<div class="kpi"><div class="l">Referencias</div><div class="v">${rows.length}</div></div>`,
-    `<div class="kpi"><div class="l">${sumLabel} total</div><div class="v">${totalCantidad}</div></div>`,
-  ];
-  mod.groupOptions.forEach(g=>{
-    const sub = rows.filter(r=>r[mod.groupByField]===g).reduce((s,r)=>s+(Number(r[mod.sumField])||0),0);
-    kpis.push(`<div class="kpi"><div class="l">${g}</div><div class="v">${sub}</div></div>`);
+// Grupos (una sección por marca): las definidas + cualquier marca extra presente en los datos
+function groupsFor(mod, rows){
+  const extra = [];
+  rows.forEach(r=>{
+    const v = r[mod.groupByField];
+    if(v && !mod.groupOptions.some(o=>sameMarca(o,v)) && !extra.some(o=>sameMarca(o,v))) extra.push(TODAS_MARCAS.find(o=>sameMarca(o,v)) || v);
   });
+  return [...mod.groupOptions, ...extra];
+}
 
-  const cols = mod.fields.filter(f=>f.key!==mod.groupByField && f.type!=="textarea");
-  const groupsHTML = mod.groupOptions.map(g=>{
-    const groupRows = rows.filter(r=>r[mod.groupByField]===g);
-    const subtotal = groupRows.reduce((s,r)=>s+(Number(r[mod.sumField])||0),0);
-    const head = cols.map(f=>`<th>${f.label}</th>`).join("") + "<th>Estado</th><th></th>";
+// Columnas de una vista agrupada: tableCols (si existe) o todos los campos + columnas calculadas
+function buildColumns(mod){
+  const gf = mod.groupByField;
+  if(mod.tableCols){
+    return mod.tableCols.map(k=>{
+      const f = mod.fields.find(x=>x.key===k);
+      if(f) return { kind:"f", f, label:f.label };
+      const c = (mod.computed||[]).find(x=>x.key===k);
+      return { kind:"c", c, label:c.label };
+    });
+  }
+  const cols = mod.fields.filter(f=>f.key!==gf && (mod.showTextarea || f.type!=="textarea")).map(f=>({ kind:"f", f, label:f.label }));
+  const comp = (mod.computed||[]).map(c=>({ kind:"c", c, label:c.label }));
+  return [...cols, ...comp];
+}
+
+/* Vista agrupada por marca (Inventario, Pedidos de merchandising y los planes):
+   una sección por marca, con totales. Las cifras se editan directo en la tabla. */
+function renderGroupedView(key, mod, rows){
+  const gf = mod.groupByField;
+  const footer = !!mod.footerTotal;
+  const multi = !!mod.sumFields && !footer;
+  const sumKeys = mod.sumFields || (mod.sumField ? [mod.sumField] : []);
+  const fieldOf = k => mod.fields.find(f=>f.key===k);
+  const fmt = (k,n) => fieldOf(k).type==="currency" ? money(n) : n;
+
+  let groups = groupsFor(mod, rows);
+  if(FILTERS.marca){
+    groups = groups.filter(g=>sameMarca(g, FILTERS.marca));
+    if(!groups.length) groups = [FILTERS.marca];
+  }
+
+  let kpis;
+  if(mod.kpiDefs){
+    kpis = [kpi("Registros", rows.length), ...mod.kpiDefs.map(d=>kpi(d.label, d.fn(rows)))];
+  }else{
+    kpis = [kpi(multi ? "Pedidos" : "Referencias", rows.length)];
+    sumKeys.forEach(k=> kpis.push(kpi(fieldOf(k).label + (multi ? "" : " total"), fmt(k, sumOf(rows,k)))));
+    if(!multi && mod.sumField){
+      groups.forEach(g=> kpis.push(kpi(g, sumOf(rows.filter(r=>sameMarca(r[gf],g)), mod.sumField))));
+    }
+  }
+
+  const columns = buildColumns(mod);
+  const hasStatus = !!mod.statusField;
+  const periodTxt = mod.periodType ? " " + [FILTERS.mes, FILTERS.anio].filter(Boolean).join(" ") : "";
+
+  const cell = (f, r) => {
+    if(mod.inlineEdit && (f.type==="number" || f.type==="currency")){
+      return `<td><input class="inl" type="number" min="0" step="any" data-role="inline" data-id="${r.id}" data-key="${f.key}" value="${Number(r[f.key])||0}"></td>`;
+    }
+    if(f.type==="textarea") return `<td class="desc">${r[f.key] ? esc(r[f.key]) : "—"}</td>`;
+    return `<td>${f.type==="currency"?money(r[f.key]):(esc(r[f.key])||"—")}</td>`;
+  };
+  const colCell = (c, r) => c.kind==="c" ? `<td>${c.c.fn(r)}</td>` : cell(c.f, r);
+
+  const footRow = rs => {
+    const cells = columns.map((c,i)=>{
+      let v = "";
+      if(i===0) v = "TOTAL";
+      else if(c.kind==="f" && sumKeys.includes(c.f.key)) v = fmt(c.f.key, sumOf(rs, c.f.key));
+      else if(c.kind==="c" && c.c.sum) v = c.c.sum(rs);
+      return `<td>${v}</td>`;
+    }).join("");
+    return `<tr class="total-row">${cells}${hasStatus?"<td></td>":""}<td></td></tr>`;
+  };
+
+  const groupsHTML = groups.map(g=>{
+    const groupRows = rows.filter(r=>sameMarca(r[gf], g));
+    const head = columns.map(c=>`<th>${c.label}</th>`).join("") + (hasStatus ? "<th>Estado</th>" : "") + "<th></th>";
+    const colspan = columns.length + (hasStatus?1:0) + 1;
     const body = groupRows.length ? groupRows.map(r => `
       <tr>
-        ${cols.map(f=>`<td>${f.type==="currency"?money(r[f.key]):(r[f.key]||"—")}</td>`).join("")}
-        <td>
+        ${columns.map(c=>colCell(c,r)).join("")}
+        ${hasStatus ? `<td>
           <select data-role="status" data-id="${r.id}" style="border:none;background:${(STATUS_COLORS[r[mod.statusField]]||"#7a8496")}22;color:${STATUS_COLORS[r[mod.statusField]]||"#7a8496"};font-weight:600;border-radius:20px;padding:3px 8px;font-size:11.5px">
             ${mod.statusOptions.map(s=>`<option ${s===r[mod.statusField]?"selected":""}>${s}</option>`).join("")}
           </select>
-        </td>
+        </td>` : ""}
         <td class="actions">
           <button data-role="edit" data-id="${r.id}" title="Editar">✎</button>
           <button data-role="del" data-id="${r.id}" title="Eliminar">🗑</button>
         </td>
-      </tr>`).join("") : `<tr><td colspan="${cols.length+2}" class="empty">Sin unidades registradas en ${g}.</td></tr>`;
+      </tr>`).join("") + (footer ? footRow(groupRows) : "")
+      : `<tr><td colspan="${colspan}" class="empty">Sin ${mod.plural || "registros"} en ${esc(g)}${periodTxt ? " ("+periodTxt.trim()+")" : ""}.</td></tr>`;
+
+    let title, chips = "";
+    if(footer){
+      title = `${mod.label}${periodTxt} — ${esc(g)} <span class="muted">· ${groupRows.length} ${groupRows.length===1 ? mod.singular : mod.plural}</span>`;
+    }else if(multi){
+      title = `${esc(g)} — ${groupRows.length} ${groupRows.length===1 ? "pedido" : "pedidos"}`;
+      chips = `<div class="chips">` + sumKeys.map(k=>`<span class="chip">${fieldOf(k).label}: <b>${fmt(k,sumOf(groupRows,k))}</b></span>`).join("") + `</div>`;
+    }else{
+      title = `${esc(g)} — ${sumOf(groupRows, mod.sumField)} ${fieldOf(mod.sumField).label.toLowerCase()}`;
+    }
     return `
       <div class="report-block">
-        <h3>${g} — ${subtotal} ${sumLabel.toLowerCase()}</h3>
+        <h3>${title}</h3>
+        ${chips}
         <div class="table-wrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
       </div>`;
   }).join("");
 
   return `
     <h1>${mod.icon} ${mod.label}</h1>
-    <div class="sub">Gestión de ${mod.label.toLowerCase()} por marca — Fersautos.</div>
+    <div class="sub">Gestión de ${mod.label.toLowerCase()} por marca — Fersautos.${mod.inlineEdit ? " Edita las cifras directamente en la tabla; la descripción y demás datos, desde ✎." : ""}</div>
+    ${filterBar(mod)}
     <div class="kpis">${kpis.join("")}</div>
     <div class="toolbar">
       <div></div>
-      <button class="btn btn-primary" data-role="new">+ Nueva unidad</button>
+      <button class="btn btn-primary" data-role="new">${mod.newLabel || "+ Nuevo registro"}</button>
     </div>
     ${groupsHTML}
   `;
@@ -433,8 +751,23 @@ function renderGroupedView(key, mod, rows){
 
 function wireModuleEvents(){
   const key = activeModule;
-  if(key === "reportes") return;
   const root = document.getElementById("content");
+
+  // Filtros globales y pestañas de marca
+  root.querySelectorAll('[data-filter]').forEach(sel=>{
+    sel.onchange = () => { FILTERS[sel.dataset.filter] = sel.value; render(); };
+  });
+  root.querySelectorAll('[data-clear]').forEach(b=>{
+    b.onclick = () => { FILTERS.marca = ""; FILTERS.mes = ""; FILTERS.anio = ""; render(); };
+  });
+  root.querySelectorAll('[data-brandtab]').forEach(el=>{
+    el.onclick = () => { FILTERS.marca = el.dataset.brandtab; render(); };
+  });
+  const exp = root.querySelector('[data-role="export"]');
+  if(exp) exp.onclick = exportGestion;
+
+  if(key === "reportes" || key === "gestion") return;
+
   const btnNew = root.querySelector('[data-role="new"]');
   if(btnNew) btnNew.onclick = () => openForm(key, null);
   root.querySelectorAll('[data-role="edit"]').forEach(b=>{
@@ -459,6 +792,16 @@ function wireModuleEvents(){
       render();
     };
   });
+  // Edición directa de cifras en la tabla (planes y pedidos)
+  root.querySelectorAll('[data-role="inline"]').forEach(inp=>{
+    inp.onchange = async () => {
+      const rec = DATA[key].find(r=>r.id===inp.dataset.id);
+      if(!rec) return;
+      rec[inp.dataset.key] = Math.max(0, Number(inp.value) || 0);
+      await saveRecord(key, rec);
+      render();
+    };
+  });
 }
 
 /* =========================================================
@@ -468,6 +811,13 @@ function openForm(key, record){
   const mod = MODULES[key];
   const isEdit = !!record;
   const data = record ? { ...record } : {};
+  if(!isEdit){
+    mod.fields.forEach(f=>{
+      if(f.default !== undefined && data[f.key] === undefined) data[f.key] = typeof f.default === "function" ? f.default() : f.default;
+    });
+    const bf = brandFieldOf(mod);
+    if(bf && FILTERS.marca && data[bf] === undefined) data[bf] = FILTERS.marca;   // hereda la marca filtrada
+  }
   const root = document.getElementById("modalRoot");
   root.innerHTML = `
     <div class="overlay" id="overlay">
@@ -488,11 +838,14 @@ function openForm(key, record){
     e.preventDefault();
     const fd = new FormData(e.target);
     const rec = isEdit ? { ...record } : {};
+    const autoBlank = [];
     mod.fields.forEach(f => {
       let v = fd.get(f.key) || "";
+      if(f.auto && v === "") autoBlank.push(f);
       if(f.type === "currency" || f.type === "number") v = Number(v) || 0;
       rec[f.key] = v;
     });
+    autoBlank.forEach(f => { rec[f.key] = f.auto(rec); });   // campos que se calculan solos si se dejan vacíos
     await saveRecord(key, rec);
     root.innerHTML = "";
     render();
@@ -504,17 +857,20 @@ function fieldHTML(f, value){
   const req = f.required ? "required" : "";
   const hintHTML = f.hint ? `<div class="hint">${f.hint}</div>` : "";
   if(f.type === "select" || f.type === "dynamicSelect"){
-    const opts = f.type === "dynamicSelect" ? (DATA[f.source]||[]).map(r=>r.nombre).filter(Boolean) : f.options;
-    return `<div class="field"><label>${f.label}</label><select name="${f.key}">
+    let opts = f.type === "dynamicSelect" ? (DATA[f.source]||[]).map(r=>r.nombre).filter(Boolean) : (f.optionsFn ? f.optionsFn() : f.options);
+    opts = [...opts];
+    if(val && !opts.includes(val)) opts.push(val);   // conserva valores antiguos que no estén en la lista
+    return `<div class="field"><label>${f.label}</label><select name="${f.key}" ${req}>
       <option value="">— Selecciona —</option>
-      ${opts.map(o=>`<option ${o===val?"selected":""}>${o}</option>`).join("")}
+      ${opts.map(o=>`<option ${o===val?"selected":""}>${esc(o)}</option>`).join("")}
     </select>${hintHTML}</div>`;
   }
   if(f.type === "textarea"){
-    return `<div class="field"><label>${f.label}</label><textarea name="${f.key}" ${req}>${val}</textarea>${hintHTML}</div>`;
+    return `<div class="field"><label>${f.label}</label><textarea name="${f.key}" ${req}>${esc(val)}</textarea>${hintHTML}</div>`;
   }
   const inputType = f.type === "currency" ? "number" : (f.type === "date" ? "date" : (f.type === "number" ? "number" : "text"));
-  return `<div class="field"><label>${f.label}</label><input type="${inputType}" name="${f.key}" value="${val}" ${req}>${hintHTML}</div>`;
+  const extra = (f.type === "currency" || f.type === "number") ? 'min="0" step="any"' : "";
+  return `<div class="field"><label>${f.label}</label><input type="${inputType}" name="${f.key}" value="${esc(val)}" ${extra} ${req}>${hintHTML}</div>`;
 }
 
 /* =========================================================
@@ -531,7 +887,7 @@ function openBitacora(key, record){
     root.innerHTML = `
       <div class="overlay" id="ovBit">
         <div class="modal" style="max-width:580px">
-          <h2>📅 Bitácora diaria — ${record.marca||""} ${titulo}</h2>
+          <h2>📅 Bitácora diaria — ${esc(record.marca||"")} ${esc(titulo)}</h2>
           <div class="sub" style="margin-bottom:10px">Vigencia: ${record.fechaInicio||"—"} a ${record.fechaFin||"—"}</div>
           <form id="bitForm" style="display:flex;gap:8px;align-items:end;margin-bottom:14px;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:130px;margin-bottom:0"><label>Fecha</label>
@@ -549,10 +905,10 @@ function openBitacora(key, record){
           <div class="report-block" style="margin-top:14px">
             <h3>Consolidado de la actividad</h3>
             <div class="kpis" style="margin-bottom:0">
-              <div class="kpi"><div class="l">Días registrados</div><div class="v">${t.dias}</div></div>
-              <div class="kpi"><div class="l">Prospectos totales</div><div class="v">${t.prospectos}</div></div>
-              <div class="kpi"><div class="l">Ventas totales</div><div class="v">${t.ventas}</div></div>
-              <div class="kpi"><div class="l">Conversión</div><div class="v">${t.prospectos ? Math.round((t.ventas/t.prospectos)*100) : 0}%</div></div>
+              ${kpi("Días registrados", t.dias)}
+              ${kpi("Prospectos totales", t.prospectos)}
+              ${kpi("Ventas totales", t.ventas)}
+              ${kpi("Conversión", (t.prospectos ? Math.round((t.ventas/t.prospectos)*100) : 0) + "%")}
             </div>
           </div>
           <div class="modal-actions"><button class="btn btn-ghost" id="closeBit">Cerrar</button></div>
@@ -580,18 +936,205 @@ function openBitacora(key, record){
 }
 
 /* =========================================================
-   8. REPORTES (consolida todos los módulos automáticamente)
+   8. HOJA DE GESTIÓN POR MARCA
+      Conecta plan de medios, plan de merchandising, playas,
+      pauta, exhibiciones, pedidos, leads e inventario usando
+      la marca como hilo común. Respeta el filtro de período.
    ========================================================= */
+const CSV_SECTIONS = [];
+
+function statsFor(brand){
+  const R = k => rowsFor(k, brand);
+  const medios = R("planMedios"), pmerch = R("planMerch"), play = R("Playas"), pau = R("pauta"), exh = R("exhibiciones");
+  const ped = R("merchandising"), leads = R("leads"), inv = R("inventario");
+  const act = [...play, ...pau, ...exh];
+  let pros = 0, ven = 0;
+  act.forEach(r => { const t = bitTotals(r); pros += t.prospectos; ven += t.ventas; });
+  const planMedios = sumOf(medios,"valor");
+  const planMerchV = pmerch.reduce((s,r)=>s+totalMerch(r),0);
+  const pedTotal = sumOf(ped,"total"), pedFin = sumOf(ped,"finalizado");
+  const merchAvance = pedTotal > 0 ? pct(pedFin, pedTotal)
+                    : (pmerch.length ? pct(pmerch.filter(r=>r.estado==="Finalizado").length, pmerch.length) : null);
+  return {
+    medios, pmerch, play, pau, exh, ped, leads, inv, act,
+    planMedios, planMerchV, planTotal: planMedios + planMerchV,
+    metaPros: sumOf(medios,"prospectos"), metaVentas: sumOf(medios,"objetivoVentas"),
+    pros, ven, presAct: sumOf(act,"presupuesto"),
+    aprobado: sumOf(ped,"presupuestoAprobado"), merchAvance,
+    leadsN: leads.length, leadsCerrados: leads.filter(r=>r.estado==="Cerrado").length,
+    invUnits: inv.filter(r=>r.estado!=="Vendido").reduce((s,r)=>s+(Number(r.cantidad)||0),0),
+  };
+}
+
+// Tabla de texto plano (se muestra en pantalla y se exporta a CSV). Si link=true, cada fila lleva a la marca.
+function tbl(title, heads, rows, total, link){
+  CSV_SECTIONS.push({ title, heads, rows: total ? [...rows, total] : rows });
+  const th = heads.map(h=>`<th>${esc(h)}</th>`).join("");
+  const td = c => `<td class="${String(c).length>40?"desc":""}">${esc(c)}</td>`;
+  const trs = rows.length
+    ? rows.map(r=>`<tr ${link?`class="clickrow" data-brandtab="${esc(r[0])}" title="Ver la hoja de esta marca"`:""}>${r.map(td).join("")}</tr>`).join("")
+    : `<tr><td colspan="${heads.length}" class="empty">Sin registros para este filtro.</td></tr>`;
+  const tr = total && rows.length ? `<tr class="total-row">${total.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>` : "";
+  return `<div class="report-block"><h3>${esc(title)}</h3><div class="table-wrap"><table><thead><tr>${th}</tr></thead><tbody>${trs}${tr}</tbody></table></div></div>`;
+}
+
+function bar(label, p, color){
+  return `<div class="bar-row"><div class="lab">${label}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,p||0)}%;background:${color}"></div></div><div class="num">${pctTxt(p)}</div></div>`;
+}
+
+function renderGestion(){
+  CSV_SECTIONS.length = 0;
+  const brand = FILTERS.marca;
+  const brands = brandsWithData();
+  const s = statsFor(brand || null);
+  const periodo = [FILTERS.mes, FILTERS.anio].filter(Boolean).join(" ") || "todos los períodos";
+  const nombre = brand || "Todas las marcas";
+
+  const tabs = [["", "Todas las marcas"], ...brands.map(b=>[b,b])].map(([v,l])=>{
+    const on = v === "" ? !brand : (brand && sameMarca(v, brand));
+    return `<button class="tab ${on?"on":""}" data-brandtab="${esc(v)}">${esc(l)}</button>`;
+  }).join("");
+
+  const pP = pct(s.pros, s.metaPros), pV = pct(s.ven, s.metaVentas);
+  const kpis = [
+    kpi("Inversión planeada", money(s.planTotal), `Medios ${money(s.planMedios)} · Merch ${money(s.planMerchV)}`),
+    kpi("Presupuesto en actividades", money(s.presAct), `${s.act.length} ${s.act.length===1?"actividad":"actividades"} (playas, pauta, exhibición)`),
+    kpi("Merchandising aprobado", money(s.aprobado), `${s.ped.length} ${s.ped.length===1?"pedido":"pedidos"}`),
+    kpi("Prospectos", `${s.pros} / ${s.metaPros}`, `Logrados / meta del plan · ${pctTxt(pP)}`),
+    kpi("Ventas", `${s.ven} / ${s.metaVentas}`, `Logradas / meta del plan · ${pctTxt(pV)}`),
+    kpi("Costo por prospecto", s.pros ? money(s.presAct/s.pros) : "—", "Presupuesto de actividades ÷ prospectos"),
+    kpi("Costo por venta", s.ven ? money(s.presAct/s.ven) : "—", "Presupuesto de actividades ÷ ventas"),
+    kpi("Leads comerciales", s.leadsN, `${s.leadsCerrados} cerrados`),
+    kpi("Unidades en inventario", s.invUnits, "Disponibles + reservadas"),
+  ].join("");
+
+  const cumplidas = s.act.filter(r=>r.estado==="Cumplido").length;
+  const cumplimiento = `<div class="report-block"><h3>Cumplimiento — ${esc(nombre)}</h3>
+    ${bar("Prospectos vs meta", pP, "#3b6bc4")}
+    ${bar("Ventas vs meta", pV, "#2e9c5c")}
+    ${bar("Actividades cumplidas", pct(cumplidas, s.act.length), "#7a5cc9")}
+    ${bar("Merchandising finalizado", s.merchAvance, MERCH_COLORS.finalizado)}
+  </div>`;
+
+  let detalle = "";
+  if(!brand){
+    // Comparativo entre marcas (clic en una fila para abrir su hoja)
+    const rows = brands.map(b=>{
+      const t = statsFor(b);
+      return [b, money(t.planMedios), money(t.planMerchV), money(t.planTotal), money(t.presAct), money(t.aprobado),
+              String(t.metaPros), String(t.pros), pctTxt(pct(t.pros,t.metaPros)),
+              String(t.metaVentas), String(t.ven), pctTxt(pct(t.ven,t.metaVentas)), pctTxt(t.merchAvance)];
+    });
+    const total = ["TOTAL", money(s.planMedios), money(s.planMerchV), money(s.planTotal), money(s.presAct), money(s.aprobado),
+                   String(s.metaPros), String(s.pros), pctTxt(pP), String(s.metaVentas), String(s.ven), pctTxt(pV), pctTxt(s.merchAvance)];
+    detalle = tbl(`Comparativo por marca — ${periodo}`,
+      ["Marca","Plan de medios","Plan merch.","Total plan","Ppto. actividades","Merch. aprobado","Prospectos meta","Prospectos logrados","% prosp.","Ventas meta","Ventas logradas","% ventas","Avance merch."],
+      rows, total, true);
+  }else{
+    const medios = s.medios;
+    detalle += tbl(`Plan de medios — ${nombre} (${periodo})`,
+      ["Actividad","Descripción","Objetivo","Prospectos","Obj. ventas","Fecha","Valor","Estado"],
+      medios.map(r=>[r.actividad||"", r.descripcion||"", r.objetivo||"", String(Number(r.prospectos)||0), String(Number(r.objetivoVentas)||0), fechaLabel(r), money(r.valor), r.estado||"—"]),
+      ["TOTAL","","",String(s.metaPros),String(s.metaVentas),"",money(s.planMedios),""]);
+    detalle += tbl(`Plan de merchandising — ${nombre} (${periodo})`,
+      ["Material P.O.P.","Descripción","Cantidad","Valor unitario","Valor total","Estado"],
+      s.pmerch.map(r=>[r.material||"", r.descripcion||"", String(Number(r.cantidad)||0), money(r.valorUnitario), money(totalMerch(r)), r.estado||"—"]),
+      ["TOTAL","",String(sumOf(s.pmerch,"cantidad")),"",money(s.planMerchV),""]);
+    const exec = [
+      ...s.play.map(r=>["Playa de venta", r.nombre||"", r]),
+      ...s.pau.map(r=>["Pauta publicitaria", (r.contenido||"").slice(0,90), r]),
+      ...s.exh.map(r=>["Exhibición en CC", r.centroComercial||"", r]),
+    ];
+    const meta = r => Number(r.metaProspectos) || Number(r.proyeccionLeads) || 0;
+    detalle += tbl(`Ejecución de actividades — ${nombre} (${periodo})`,
+      ["Tipo","Detalle","Fechas","Presupuesto","Meta prospectos","Prospectos logrados","Ventas logradas","Estado"],
+      exec.map(([t,d,r])=>{ const b = bitTotals(r); return [t, d, fechaLabel(r), money(r.presupuesto), String(meta(r)), String(b.prospectos), String(b.ventas), r.estado||"—"]; }),
+      ["TOTAL","","",money(s.presAct), String(exec.reduce((a,x)=>a+meta(x[2]),0)), String(s.pros), String(s.ven), ""]);
+    detalle += tbl(`Pedidos de merchandising — ${nombre}`,
+      ["Descripción","Presupuesto aprobado","Total","Pendiente","Pedido","Enviado","Finalizado","Avance"],
+      s.ped.map(r=>[r.descripcion||"", money(r.presupuestoAprobado), String(Number(r.total)||0), String(Number(r.pendiente)||0), String(Number(r.pedido)||0), String(Number(r.enviado)||0), String(Number(r.finalizado)||0), pctTxt(pct(Number(r.finalizado)||0, Number(r.total)||0) ?? 0)]),
+      ["TOTAL", money(s.aprobado), String(sumOf(s.ped,"total")), String(sumOf(s.ped,"pendiente")), String(sumOf(s.ped,"pedido")), String(sumOf(s.ped,"enviado")), String(sumOf(s.ped,"finalizado")), pctTxt(pct(sumOf(s.ped,"finalizado"), sumOf(s.ped,"total")))]);
+
+    const leadChips = MODULES.leads.statusOptions.map(o=>`<span class="chip">${o}: <b>${s.leads.filter(r=>r.estado===o).length}</b></span>`).join("");
+    const invChips = MODULES.inventario.statusOptions.map(o=>`<span class="chip">${o}: <b>${s.inv.filter(r=>r.estado===o).reduce((a,r)=>a+(Number(r.cantidad)||0),0)}</b></span>`).join("");
+    detalle += `<div class="report-block"><h3>Comercial — ${esc(nombre)}</h3>
+      <div class="chips"><span class="chip"><b>Leads</b></span>${leadChips}</div>
+      <div class="chips" style="margin-bottom:0"><span class="chip"><b>Inventario (unidades)</b></span>${invChips}</div>
+    </div>`;
+  }
+
+  return `
+    <h1>🧭 Gestión por marca</h1>
+    <div class="sub">Todo lo planeado y ejecutado por marca en un solo lugar: plan de medios, plan de merchandising, playas, pauta, exhibiciones, pedidos, leads e inventario. Período: ${esc(periodo)}.</div>
+    <div class="tabs">${tabs}</div>
+    ${filterBar(null, { noBrand:true, period:true })}
+    <div class="toolbar"><div></div>${DL ? `<button class="btn btn-ghost" data-role="export">⬇ Descargar reporte (CSV)</button>` : ""}</div>
+    <div class="kpis">${kpis}</div>
+    ${cumplimiento}
+    ${detalle}
+  `;
+}
+
+const csvCell = v => {
+  let t = String(v == null ? "" : v);
+  const m = t.match(/^\$ ([\d.,]+)$/);
+  if(m) t = m[1].replace(/\./g,"").replace(/,/g,"");
+  return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t;
+};
+async function exportGestion(){
+  if(!DL){ alert("La descarga no está disponible en esta vista."); return; }
+  const lines = [];
+  lines.push(["Fersautos — Gestión por marca: " + (FILTERS.marca || "Todas las marcas"), [FILTERS.mes, FILTERS.anio].filter(Boolean).join(" ") || "Todos los períodos"]);
+  lines.push([]);
+  CSV_SECTIONS.forEach(sec => { lines.push([sec.title]); lines.push(sec.heads); sec.rows.forEach(r=>lines.push(r)); lines.push([]); });
+  const csv = "\uFEFF" + lines.map(r=>r.map(csvCell).join(";")).join("\r\n");
+  const file = "gestion-" + (FILTERS.marca || "todas-las-marcas").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-") + ".csv";
+  try{ await DL.save({ filename:file, data:csv }); }
+  catch(e){ if(!e || e.code !== "declined") alert("No se pudo descargar el archivo."); }
+}
+
+/* =========================================================
+   9. REPORTES (consolida todos los módulos automáticamente)
+   ========================================================= */
+function renderMerchReport(mod, rows){
+  const keys = mod.sumFields;
+  const fieldOf = k => mod.fields.find(f=>f.key===k);
+  const fmt = (k,n) => fieldOf(k).type==="currency" ? money(n) : n;
+  const groups = groupsFor(mod, rows).filter(g => rows.some(r=>sameMarca(r[mod.groupByField], g)));
+
+  const etapas = ["pendiente","pedido","enviado","finalizado"];
+  const maxE = Math.max(1, ...etapas.map(k=>sumOf(rows,k)));
+  const bars = etapas.map(k=>{
+    const n = sumOf(rows,k);
+    return `<div class="bar-row"><div class="lab">${fieldOf(k).label}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/maxE*100)}%;background:${MERCH_COLORS[k]}"></div></div><div class="num">${n}</div></div>`;
+  }).join("");
+
+  const trs = groups.map(g=>{
+    const rs = rows.filter(r=>sameMarca(r[mod.groupByField], g));
+    const tot = sumOf(rs,"total"), fin = sumOf(rs,"finalizado");
+    return `<tr><td>${esc(g)}</td>${keys.map(k=>`<td>${fmt(k,sumOf(rs,k))}</td>`).join("")}<td>${tot ? Math.round(fin/tot*100) : 0}%</td></tr>`;
+  }).join("");
+  const totT = sumOf(rows,"total"), totF = sumOf(rows,"finalizado");
+  const totalRow = `<tr class="total-row"><td>Total</td>${keys.map(k=>`<td>${fmt(k,sumOf(rows,k))}</td>`).join("")}<td>${totT ? Math.round(totF/totT*100) : 0}%</td></tr>`;
+
+  return `<div class="report-block"><h3>${mod.icon} ${mod.label} por marca (${rows.length} en total)</h3>
+    ${bars}
+    ${rows.length ? `<div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Marca</th>${keys.map(k=>`<th>${fieldOf(k).label}</th>`).join("")}<th>Avance</th></tr></thead><tbody>${trs}${totalRow}</tbody></table></div>` : `<div class="empty">Aún no hay pedidos registrados.</div>`}
+  </div>`;
+}
+
 function renderReportes(){
   let blocks = "";
   Object.entries(MODULES).forEach(([key, mod]) => {
     const rows = DATA[key];
+    if(mod.reportType === "pedidos"){ blocks += renderMerchReport(mod, rows); return; }
+    if(!mod.statusField) return;
     const max = Math.max(1, ...mod.statusOptions.map(s=>rows.filter(r=>r[mod.statusField]===s).length));
     blocks += `<div class="report-block"><h3>${mod.icon} ${mod.label} por estado (${rows.length} en total)</h3>
       ${mod.statusOptions.map(s=>{
         const c = rows.filter(r=>r[mod.statusField]===s).length;
-        const pct = Math.round((c/max)*100);
-        return `<div class="bar-row"><div class="lab">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${STATUS_COLORS[s]||'#7a8496'}"></div></div><div class="num">${c}</div></div>`;
+        const p = Math.round((c/max)*100);
+        return `<div class="bar-row"><div class="lab">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${STATUS_COLORS[s]||'#7a8496'}"></div></div><div class="num">${c}</div></div>`;
       }).join("")}
     </div>`;
   });
@@ -602,6 +1145,9 @@ function renderReportes(){
     presupuesto += Number(r.presupuesto)||0;
     const t = bitTotals(r); prospectos += t.prospectos; ventas += t.ventas;
   }));
+  const planMediosV = sumOf(DATA.planMedios||[], "valor");
+  const planMerchV = (DATA.planMerch||[]).reduce((s,r)=>s+totalMerch(r),0);
+  const presupuestoMerch = sumOf(DATA.merchandising||[], "presupuestoAprobado");
   const inv = DATA.inventario||[], leads = DATA.leads||[];
   const unidadesDisponibles = inv.filter(r=>r.estado!=="Vendido").reduce((s,r)=>s+(Number(r.cantidad)||0),0);
   const cerrados = leads.filter(r=>r.estado==="Cerrado").length;
@@ -616,19 +1162,22 @@ function renderReportes(){
   const provBlock = provRows.length ? `
     <div class="report-block"><h3>🤝 Gasto e inversión por proveedor</h3>
       <div class="table-wrap"><table><thead><tr><th>Proveedor</th><th>Tipo</th><th>Actividades</th><th>Presupuesto asignado</th></tr></thead>
-      <tbody>${provRows.map(p=>`<tr><td>${p.nombre}</td><td>${p.tipo||"—"}</td><td>${p.act}</td><td>${money(p.gasto)}</td></tr>`).join("")}</tbody>
+      <tbody>${provRows.map(p=>`<tr><td>${esc(p.nombre)}</td><td>${esc(p.tipo||"—")}</td><td>${p.act}</td><td>${money(p.gasto)}</td></tr>`).join("")}</tbody>
       </table></div>
     </div>` : "";
 
   return `
     <h1>📊 Reportes</h1>
-    <div class="sub">Consolidado general de Playas, pauta, exhibiciones, leads e inventario.</div>
+    <div class="sub">Consolidado general (todas las marcas y períodos). Para el detalle por marca y período usa <b>Gestión por marca</b>.</div>
     <div class="kpis">
-      <div class="kpi"><div class="l">Presupuesto total actividades</div><div class="v">${money(presupuesto)}</div></div>
-      <div class="kpi"><div class="l">Prospectos generados</div><div class="v">${prospectos}</div></div>
-      <div class="kpi"><div class="l">Ventas generadas</div><div class="v">${ventas}</div></div>
-      <div class="kpi"><div class="l">Unidades disponibles</div><div class="v">${unidadesDisponibles}</div></div>
-      <div class="kpi"><div class="l">Conversión de leads</div><div class="v">${conversion}%</div></div>
+      ${kpi("Plan de medios (valor)", money(planMediosV))}
+      ${kpi("Plan de merchandising (valor)", money(planMerchV))}
+      ${kpi("Presupuesto total actividades", money(presupuesto))}
+      ${kpi("Presupuesto merchandising aprobado", money(presupuestoMerch))}
+      ${kpi("Prospectos generados", prospectos)}
+      ${kpi("Ventas generadas", ventas)}
+      ${kpi("Unidades disponibles", unidadesDisponibles)}
+      ${kpi("Conversión de leads", conversion + "%")}
     </div>
     ${provBlock}
     ${blocks}
@@ -636,7 +1185,7 @@ function renderReportes(){
 }
 
 /* =========================================================
-   9. ARRANQUE
+   10. ARRANQUE
    ========================================================= */
 (async function start(){
   document.getElementById("content").innerHTML = '<div class="empty">Cargando información…</div>';
